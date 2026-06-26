@@ -1,0 +1,1478 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa ESRN Rural - Río Negro</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=League+Spartan:wght@400;700;900&family=Roboto+Condensed:wght@400;700&display=swap');
+
+        :root {
+            --azul-afa: #002d4a;
+            --celeste-linea: #74acdf;
+            --gris-fondo: #cbd5e1;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Roboto Condensed', sans-serif;
+            background: var(--gris-fondo);
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .main-wrapper {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 20px;
+            flex-wrap: wrap;
+            max-width: 1400px;
+            width: 100%;
+        }
+
+        .map-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            overflow: hidden;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .map-header {
+            background: var(--azul-afa);
+            color: white;
+            padding: 15px 25px;
+            font-family: 'Oswald', sans-serif;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .map-header .subtitle {
+            font-family: 'Roboto Condensed', sans-serif;
+            font-size: 0.8rem;
+            opacity: 0.8;
+            font-weight: 400;
+        }
+
+        #map {
+            width: 100%;
+            height: 700px;
+            background: #e8f4f8;
+            position: relative;
+            cursor: grab;
+        }
+
+        #map svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .province-path {
+            fill: #f0f9ff;
+            stroke: var(--azul-afa);
+            stroke-width: 1.5;
+            transition: fill 0.2s;
+        }
+
+        .dept-path {
+            fill: none;
+            stroke: #94a3b8;
+            stroke-width: 0.5;
+            stroke-opacity: 0.6;
+        }
+
+        .marker-group {
+            cursor: pointer;
+        }
+
+        .marker-group:hover .marker-circle {
+            r: 11;
+            stroke-width: 3;
+        }
+
+        .marker-group:hover .marker-circle.sede-circle {
+            r: 13;
+            stroke-width: 3;
+        }
+
+        .marker-circle {
+            stroke: white;
+            stroke-width: 2;
+            transition: stroke-width 0.15s;
+        }
+
+        .marker-pulse {
+            fill: none;
+            stroke-width: 1.5;
+            opacity: 0;
+        }
+
+        .marker-label {
+            font-family: 'Roboto Condensed', sans-serif;
+            font-size: 9px;
+            font-weight: 700;
+            fill: var(--azul-afa);
+            pointer-events: none;
+            text-shadow: 0 0 4px white, 0 0 4px white, 0 0 4px white;
+        }
+
+        .corredor-ring {
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .corredor-ring:hover {
+            opacity: 1 !important;
+        }
+
+        .corredor-hit {
+            cursor: pointer;
+        }
+
+        .popup {
+            position: absolute;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+            padding: 0;
+            min-width: 220px;
+            max-width: 300px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s, transform 0.2s;
+            transform: translateY(5px);
+            z-index: 100;
+            overflow: hidden;
+        }
+
+        .popup.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .popup-header {
+            padding: 10px 15px;
+            color: white;
+            font-family: 'Oswald', sans-serif;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .popup-body {
+            padding: 12px 15px;
+        }
+
+        .popup-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            font-size: 0.85rem;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .popup-row:last-child {
+            border-bottom: none;
+        }
+
+        .popup-label {
+            font-weight: 700;
+            color: var(--azul-afa);
+        }
+
+        .popup-value {
+            color: #475569;
+            text-align: right;
+        }
+
+        .popup-close {
+            margin-left: auto;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            pointer-events: auto;
+            opacity: 0.8;
+        }
+
+        .popup-close:hover { opacity: 1; }
+
+        /* Corredor panel */
+        .corredor-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 320px;
+            max-height: calc(100% - 60px);
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+            z-index: 110;
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(5px);
+            transition: opacity 0.2s, transform 0.2s;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .corredor-panel.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .corredor-panel-header {
+            padding: 12px 16px;
+            background: var(--azul-afa);
+            color: white;
+            font-family: 'Oswald', sans-serif;
+            font-size: 1.05rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .corredor-panel-header .corredor-color {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            border: 2px solid rgba(255,255,255,0.5);
+        }
+
+        .corredor-panel-close {
+            margin-left: auto;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.1rem;
+            cursor: pointer;
+            opacity: 0.8;
+        }
+
+        .corredor-panel-close:hover { opacity: 1; }
+
+        .corredor-panel-body {
+            padding: 12px 16px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .corredor-panel-section {
+            margin-bottom: 12px;
+        }
+
+        .corredor-panel-section label {
+            display: block;
+            font-weight: 700;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--azul-afa);
+            margin-bottom: 4px;
+        }
+
+        .corredor-panel-section .value {
+            font-size: 0.85rem;
+            color: #475569;
+            line-height: 1.4;
+        }
+
+        .corredor-panel-info {
+            font-size: 0.85rem;
+            color: #475569;
+            line-height: 1.5;
+            min-height: 60px;
+            padding: 8px 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            background: #f8fafc;
+            outline: none;
+            transition: border-color 0.15s, background 0.15s;
+        }
+
+        .corredor-panel-info:focus {
+            border-color: var(--celeste-linea);
+            background: white;
+        }
+
+        .corredor-panel-info[contenteditable="true"] {
+            border-color: var(--celeste-linea);
+            background: white;
+        }
+
+        .corredor-panel-actions {
+            display: flex;
+            gap: 8px;
+            padding: 8px 16px 12px;
+        }
+
+        .corredor-panel-actions button {
+            padding: 6px 14px;
+            border: none;
+            border-radius: 6px;
+            font-family: 'Roboto Condensed', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .btn-edit {
+            background: var(--celeste-linea);
+            color: white;
+        }
+
+        .btn-edit:hover { background: #5a9bd0; }
+
+        .btn-save {
+            background: #22c55e;
+            color: white;
+        }
+
+        .btn-save:hover { background: #16a34a; }
+
+        .btn-cancel {
+            background: #e2e8f0;
+            color: #475569;
+        }
+
+        .btn-cancel:hover { background: #cbd5e1; }
+
+        /* Sidebar */
+        .sidebar {
+            width: 320px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .sidebar-header {
+            background: var(--azul-afa);
+            color: white;
+            padding: 15px 20px;
+            font-family: 'Oswald', sans-serif;
+            font-size: 1.1rem;
+        }
+
+        .sidebar-search {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .sidebar-search input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-family: 'Roboto Condensed', sans-serif;
+            font-size: 0.85rem;
+        }
+
+        .sidebar-list {
+            max-height: 540px;
+            overflow-y: auto;
+            padding: 5px 0;
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 7px 15px;
+            cursor: pointer;
+            transition: background 0.15s;
+            border-left: 3px solid transparent;
+        }
+
+        .sidebar-item:hover {
+            background: #f8fafc;
+            border-left-color: var(--celeste-linea);
+        }
+
+        .sidebar-item.active {
+            background: #f1f5f9;
+            border-left-color: var(--azul-afa);
+        }
+
+        .sidebar-item .dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            border: 2px solid white;
+            box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
+        }
+
+        .sidebar-item .info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .sidebar-item .name {
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: var(--azul-afa);
+        }
+
+        .sidebar-item .loc {
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+
+        .sidebar-item .num {
+            font-family: 'Oswald', sans-serif;
+            font-size: 0.8rem;
+            color: #94a3b8;
+            min-width: 24px;
+        }
+
+        .map-controls {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 5px;
+            z-index: 50;
+        }
+
+        .map-controls button {
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 8px;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            cursor: pointer;
+            font-size: 1.1rem;
+            color: var(--azul-afa);
+            transition: 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .map-controls button:hover {
+            background: var(--celeste-linea);
+            color: white;
+        }
+
+        .map-controls button.active {
+            background: var(--azul-afa);
+            color: white;
+        }
+
+        .btn-toggle-corredores {
+            width: auto !important;
+            padding: 0 14px !important;
+            gap: 6px;
+            font-size: 0.8rem !important;
+            font-family: 'Roboto Condensed', sans-serif;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            border-radius: 18px !important;
+            margin-bottom: 4px;
+        }
+
+        .btn-toggle-corredores .icon {
+            font-size: 1rem;
+            line-height: 1;
+        }
+
+        .btn-toggle-corredores .label {
+            white-space: nowrap;
+        }
+
+        .btn-toggle-corredores.active {
+            background: #166534 !important;
+        }
+
+        .btn-toggle-corredores.active .icon {
+            opacity: 1;
+        }
+
+        .btn-toggle-corredores.inactive {
+            background: #94a3b8 !important;
+            color: white !important;
+        }
+
+        .btn-toggle-corredores.inactive .icon {
+            opacity: 0.6;
+        }
+
+        .tooltip {
+            position: absolute;
+            padding: 4px 10px;
+            background: rgba(0,45,74,0.9);
+            color: white;
+            border-radius: 6px;
+            font-family: 'Roboto Condensed', sans-serif;
+            font-size: 0.8rem;
+            pointer-events: none;
+            z-index: 90;
+            opacity: 0;
+            transition: opacity 0.15s;
+            white-space: nowrap;
+        }
+
+        .tooltip.visible {
+            opacity: 1;
+        }
+
+        .loading-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.8);
+            z-index: 200;
+            font-family: 'Roboto Condensed', sans-serif;
+            font-size: 1rem;
+            color: var(--azul-afa);
+            gap: 10px;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid #e2e8f0;
+            border-top-color: var(--azul-afa);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .stats-bar {
+            display: flex;
+            gap: 20px;
+            padding: 10px 20px;
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+
+        .stats-bar strong {
+            color: var(--azul-afa);
+        }
+
+        @media (max-width: 900px) {
+            .sidebar { width: 100%; max-height: 300px; }
+            .sidebar-list { max-height: 200px; }
+            #map { height: 500px; }
+            .corredor-panel { width: 260px; right: 5px; top: 5px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-wrapper">
+        <div class="map-container">
+            <div class="map-header">
+                <span>Mapa de corredores</span>
+                <span class="subtitle">Provincia de Río Negro</span>
+            </div>
+            <div id="map">
+                <div class="loading-overlay" id="loading">
+                    <div class="spinner"></div>
+                    Cargando mapa...
+                </div>
+                <div class="popup" id="popup">
+                    <div class="popup-header" id="popupHeader">
+                        <span id="popupTitle"></span>
+                        <button class="popup-close" id="popupClose">✕</button>
+                    </div>
+                    <div class="popup-body" id="popupBody"></div>
+                </div>
+                <div class="corredor-panel" id="corredorPanel">
+                    <div class="corredor-panel-header">
+                        <span class="corredor-color" id="corredorPanelColor"></span>
+                        <span id="corredorPanelTitle">Corredor</span>
+                        <button class="corredor-panel-close" id="corredorPanelClose">✕</button>
+                    </div>
+                    <div class="corredor-panel-body">
+                        <div class="corredor-panel-section">
+                            <label>Anexos</label>
+                            <div class="value" id="corredorPanelAnexos"></div>
+                        </div>
+                        <div class="corredor-panel-section">
+                            <label>Patrimonio Geográfico</label>
+                            <div class="corredor-panel-info" id="cp-patrimonio" contenteditable="false"></div>
+                        </div>
+                        <div class="corredor-panel-section">
+                            <label>Fiestas</label>
+                            <div class="corredor-panel-info" id="cp-fiestas" contenteditable="false"></div>
+                        </div>
+                        <div class="corredor-panel-section">
+                            <label>Aspectos Identitarios</label>
+                            <div class="corredor-panel-info" id="cp-identidad" contenteditable="false"></div>
+                        </div>
+                    </div>
+                    <div class="corredor-panel-actions">
+                        <button class="btn-edit" id="corredorPanelEditBtn">✏️ Editar</button>
+                        <button class="btn-save" id="corredorPanelSaveBtn" style="display:none">💾 Guardar</button>
+                        <button class="btn-cancel" id="corredorPanelCancelBtn" style="display:none">Cancelar</button>
+                    </div>
+                </div>
+                <div class="tooltip" id="tooltip"></div>
+                <div class="map-controls">
+                    <button id="toggleRutas" class="btn-toggle-corredores inactive" title="Mostrar rutas nacionales">
+                        <span class="icon">🛣</span>
+                        <span class="label">Rutas</span>
+                    </button>
+                    <button id="toggleCorredores" class="btn-toggle-corredores active" title="Ocultar corredores">
+                        <span class="icon">👁</span>
+                        <span class="label">Corredores</span>
+                    </button>
+                    <button id="zoomIn" title="Acercar">＋</button>
+                    <button id="zoomOut" title="Alejar">−</button>
+                    <button id="zoomReset" title="Restablecer vista">⟲</button>
+                </div>
+            </div>
+            <div class="stats-bar">
+                <span><strong id="totalAnexos">0</strong> Anexos</span>
+                <span><strong id="totalCorredores">0</strong> Corredores</span>
+                <span>Click en un marcador o corredor para ver detalles</span>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <div class="sidebar-header">Anexos</div>
+            <div class="sidebar-search">
+                <input type="text" id="searchInput" placeholder="Buscar anexo o localidad..." oninput="filterList()">
+            </div>
+            <div class="sidebar-list" id="sidebarList"></div>
+        </div>
+    </div>
+
+    <script>
+        const ANEXOS = [
+            { num: 1,  nombre: "Chelforó",        lat: -39.087704, lon: -66.5232605, color: "#38bdf8", depto: "Avellaneda" },
+            { num: 4,  nombre: "Aguada de Guerra", lat: -41.066372, lon: -68.3831126, color: "#fb923c", depto: "25 de Mayo" },
+            { num: 5,  nombre: "Rincón Treneta",   lat: -40.9525,   lon: -67.0522,    color: "#4ade80", depto: "Nueve de Julio" },
+            { num: 6,  nombre: "Comicó",           lat: -41.070833, lon: -67.477778,  color: "#f87171", depto: "Nueve de Julio" },
+            { num: 8,  nombre: "Yaminué",          lat: -40.9764,   lon: -67.1919,    color: "#818cf8", depto: "Nueve de Julio" },
+            { num: 9,  nombre: "Cerro Policía",    lat: -39.733333, lon: -68.516667,  color: "#2dd4bf", depto: "El Cuy" },
+            { num: 10, nombre: "Aguada Guzmán",    lat: -39.983333, lon: -68.866667,  color: "#fbbf24", depto: "El Cuy" },
+            { num: 11, nombre: "Mencué",            lat: -40.416667, lon: -69.633333, color: "#60a5fa", depto: "El Cuy" },
+            { num: 12, nombre: "Corralito",        lat: -40.625,    lon: -70.9208,    color: "#f472b6", depto: "Pilcaniyeu" },
+            { num: 13, nombre: "Naupahuen",        lat: -39.83,     lon: -69.508889,  color: "#22d3ee", depto: "El Cuy" },
+            { num: 14, nombre: "Río Chico",        lat: -41.716667, lon: -70.5,       color: "#fb7185", depto: "Ñorquincó" },
+            { num: 15, nombre: "Mamuel Choique",   lat: -41.771111, lon: -70.136944,  color: "#94a3b8", depto: "Ñorquincó" },
+            { num: 16, nombre: "Aguada Cecilio",   lat: -40.85,     lon: -65.85,      color: "#34d399", depto: "Valcheta" },
+            { num: 17, nombre: "Sierra Paileman",  lat: -41.191221, lon: -65.97745,   color: "#60a5fa", depto: "Valcheta" },
+            { num: 18, nombre: "Arroyo Los Berros",lat: -41.436282, lon: -66.097575,  color: "#c084fc", depto: "Valcheta" },
+            { num: 19, nombre: "Peñas Blancas",    lat: -37.693056, lon: -67.87,      color: "#86efac", depto: "General Roca" },
+            { num: 20, nombre: "Laguna Blanca",    lat: -40.733333, lon: -69.85,      color: "#93c5fd", depto: "Pilcaniyeu" },
+            { num: 21, nombre: "Cona Niyeu",       lat: -41.86572,  lon: -66.937983,  color: "#74acdf", depto: "Nueve de Julio" },
+            { num: 22, nombre: "El Caín",          lat: -41.633331, lon: -68.316681,  color: "#fca5a5", depto: "25 de Mayo" },
+            { num: 23, nombre: "Lago Pellegrini",  lat: -38.7,      lon: -68.0281,    color: "#5eead4", depto: "General Roca" },
+            { num: 24, nombre: "Villa Llanquín",   lat: -40.8956,   lon: -71.0367,    color: "#fdba74", depto: "Pilcaniyeu" },
+            { num: 27, nombre: "El Manso",         lat: -41.57,     lon: -71.76,      color: "#94a3b8", depto: "Bariloche" },
+            { num: 28, nombre: "El Cóndor",        lat: -41.0425,   lon: -62.827778,  color: "#67e8f9", depto: "Adolfo Alsina" },
+            { num: 32, nombre: "Valle Verde",      lat: -37.61559,  lon: -68.03233,   color: "#bef264", depto: "General Roca" },
+            { num: 36, nombre: "Colan Conhué",     lat: -40.666667, lon: -69.1,       color: "#fda4af", depto: "25 de Mayo" },
+            { num: 37, nombre: "Blancura Centro",  lat: -40.45,     lon: -69.35,      color: "#94a3b8", depto: "El Cuy" },
+            { num: 0,  nombre: "Viedma (Sede)",    lat: -40.81345,  lon: -62.99668,   color: "#f59e0b", depto: "Adolfo Alsina", sede: true }
+        ];
+
+        const CORREDORES = [
+            {
+                id: 1, nombre: "Primer Corredor: Lago Pellegrini",
+                color: "#f59e0b", anexosNums: [23],
+                patrimonio: "Cuenca artificial del Embalse Ingeniero Ballester, oasis de riego y bardas de areniscas rojas.",
+                fiestas: "Fiesta Provincial de la Pera (Allen) y eventos náuticos de apertura de temporada.",
+                identidad: "Ingeniería hidráulica de principios del siglo XX, pioneros del riego y recreación en el Alto Valle."
+            },
+            {
+                id: 2, nombre: "Segundo Corredor: Valle Verde y Peñas Blancas",
+                color: "#22c55e", anexosNums: [32, 19],
+                patrimonio: "Ribera e islas del Río Colorado en el extremo norte, yacimientos fósiles y formaciones de la Cuenca Neuquina.",
+                fiestas: "Fiesta Provincial del Petróleo y la Energía (Catriel).",
+                identidad: "Cultura petrolera mixturada con la producción hortícola y la vida rural ribereña de frontera con La Pampa."
+            },
+            {
+                id: 3, nombre: "Tercer Corredor: Meseta Norte y Transición",
+                color: "#ef4444", anexosNums: [9, 10, 13, 11, 20, 37, 36],
+                patrimonio: "Cañadones profundos, geoformas erosivas, fósiles y la transición a la alta estepa volcánica (más de 1000 msnm) con lagunas endorreicas.",
+                fiestas: "Fiesta del Encuentro y la Tradición (Cerro Policía) y Fiesta del Criancero (Mencué).",
+                identidad: "Identidad transhumante y criancera, aislamiento invernal, fuerte herencia Mapuche y cooperativismo textil de lana y mohair."
+            },
+            {
+                id: 4, nombre: "Cuarto Corredor: Precordillera y Cuenca del Limay",
+                color: "#a855f7", anexosNums: [12, 24, 27],
+                patrimonio: "Ecotono de transición y Cordillera de los Andes, ríos de deshielo (Limay, Manso), valles glaciarios y formaciones calcáreas.",
+                fiestas: "Fiesta de la Confluencia (Villa Llanquín) y encuentros de destrezas hípicas.",
+                identidad: "Conectividad por balsa maroma, identidad binacional e histórica de arreo, y vida de montaña."
+            },
+            {
+                id: 5, nombre: "Quinto Corredor: Suroeste (La Trochita)",
+                color: "#ec4899", anexosNums: [14, 15],
+                patrimonio: "Relieve quebrado con formaciones de basalto negro, mallines de altura y el cañadón del Río Chico.",
+                fiestas: "Fiesta del Río Chico.",
+                identidad: "Cultura ligada indisolublemente al Viejo Expreso Patagónico ('La Trochita'), sus puentes, túneles e ingeniería ferroviaria a vapor."
+            },
+            {
+                id: 6, nombre: "Sexto Corredor: Somuncura Centro-Oeste y Línea Sur",
+                color: "#06b6d4", anexosNums: [5, 8, 6, 22, 4],
+                patrimonio: "Vertientes y cañadones del norte de Somuncura que conectan con las mesetas basálticas escalonadas y contrafuertes occidentales.",
+                fiestas: "Fiestas patronales, aniversarios de los parajes y encuentros camperos locales.",
+                identidad: "Comunidades rurales resistentes en el corazón de la estepa, técnicas ancestrales de captación de agua y profunda herencia cultural mapuche."
+            },
+            {
+                id: 7, nombre: "Séptimo Corredor: Chelforó (Valle Medio Oriental)",
+                color: "#f97316", anexosNums: [1],
+                patrimonio: "Valle Medio del Río Negro, zona de transición donde la estepa muerde la llanura aluvial del río.",
+                fiestas: "Fiesta del Pueblo (Chelforó) y vínculo con la Fiesta Nacional del Tomate (Choele Choe).",
+                identidad: "Antigua estación del Ferrocarril Sud e hito caminero clave sobre la Ruta Nacional 22."
+            },
+            {
+                id: 8, nombre: "Octavo Corredor: Vertiente Oriental, Arroyo Los Berros y Costa Marítima",
+                color: "#14b8a6", anexosNums: [18, 21, 17, 16],
+                patrimonio: "Desde la meseta profunda y zonas mineras (laja, hierro) hasta los paredones de Paileman, conectando con los acantilados marinos y la desembocadura del Río Negro en el mar.",
+                fiestas: "Fiesta Provincial del Cóndor Andino (Sierra Paileman) y Fiesta de la Piedra Laja (Arroyo Los Berros).",
+                identidad: "Minería artesanal, conservación biológica (reintroducción del cóndor) y arraigo ferroviario en el nodo de Aguada Cecilio."
+            },
+            {
+                id: 9, nombre: "Noveno Corredor: Litoral Atlántico (Nodo Único)",
+                color: "#0ea5e9", anexosNums: [28],
+                patrimonio: "Desembocadura del Río Negro en el Océano Atlántico (El Pescadero). Acantilados marinos activos de la Patagonia septentrional que albergan la colonia de loros barranqueros más grande del mundo, playas de arena extensas y restingas expuestas en bajamar.",
+                fiestas: "Fiesta Nacional del Mar y el Acampante y Fiesta Provincial del Viento (potencial para deportes de vela y kite).",
+                identidad: "Identidad marítima, marítimo-deportiva y de veraneo regional. Es el portal del Camino de la Costa (Ruta Provincial 1) y está profundamente ligado a la historia del faro más antiguo de la Patagonia continental (Faro Río Negro)."
+            }
+        ];
+
+        // Override marker colors with corredor colors
+        CORREDORES.forEach(c => {
+            c.anexosNums.forEach(num => {
+                const a = ANEXOS.find(x => x.num === num);
+                if (a) a.color = c.color;
+            });
+        });
+
+        const RUTAS = [
+            { nombre: "RN 22", color: "#dc2626", segmentos: [
+                [[-67.265199,-39.075412],[-67.192111,-39.085731],[-67.178450,-39.078581],[-67.098145,-39.087015],[-67.083513,-39.098529],[-67.024764,-39.102373],[-66.936455,-39.121838],[-66.923711,-39.107028],[-66.886644,-39.098490],[-66.923780,-39.106969],[-66.936485,-39.121753],[-67.024820,-39.102241],[-67.083496,-39.098445],[-67.098108,-39.086931],[-67.178504,-39.078480],[-67.192429,-39.085609],[-67.362738,-39.063221],[-67.265199,-39.075412]],
+                [[-67.911123,-38.991286],[-67.921536,-38.986513],[-67.911123,-38.991286]],
+                [[-70.055766,-38.895425],[-70.035548,-38.889877]],
+                [[-70.035548,-38.889877],[-70.035548,-38.889877]],
+                [[-67.933102,-38.981211],[-67.943396,-38.976348],[-67.933102,-38.981211]],
+                [[-70.032804,-38.889435],[-69.975134,-38.877626],[-69.931789,-38.878327],[-69.704250,-38.920480],[-69.641723,-38.949506],[-69.607907,-38.955476],[-69.446393,-38.957465],[-69.209512,-38.930109]],
+                [[-68.588811,-39.078144],[-68.583073,-39.075567],[-68.588811,-39.078144]],
+                [[-68.420238,-39.006842],[-68.583073,-39.075567]],
+                [[-68.009170,-38.943599],[-68.006094,-38.945195]],
+                [[-68.002616,-38.946958],[-68.002616,-38.946958]],
+                [[-67.994680,-38.951001],[-68.002616,-38.946958]],
+                [[-67.991289,-38.952726],[-67.991289,-38.952726]],
+                [[-67.991289,-38.952726],[-67.943396,-38.976348]],
+                [[-67.911123,-38.991286],[-67.853422,-38.999276],[-67.838543,-39.010514],[-67.616864,-39.038773]],
+                [[-67.592683,-39.041844],[-67.612275,-39.039376]],
+                [[-67.588858,-39.042347],[-67.588858,-39.042347]],
+                [[-67.581383,-39.043306],[-67.588858,-39.042347]],
+                [[-67.578084,-39.044063],[-67.578084,-39.044063]],
+                [[-67.569236,-39.044801],[-67.576384,-39.043939]],
+                [[-67.565514,-39.045275],[-67.565514,-39.045275]],
+                [[-67.384250,-39.060516],[-67.423565,-39.055696],[-67.439359,-39.062978],[-67.565514,-39.045275]],
+                [[-67.366449,-39.062762],[-67.384250,-39.060516],[-67.366449,-39.062762]],
+                [[-67.362738,-39.063221],[-67.366449,-39.062762]],
+                [[-64.422459,-39.052036],[-64.420282,-39.051663]],
+                [[-66.517688,-39.086878],[-66.554174,-39.086291],[-66.637694,-39.059922],[-66.762184,-39.066539],[-66.886644,-39.098490]],
+                [[-66.511415,-39.087339],[-66.517688,-39.086878],[-66.511415,-39.087339]],
+                [[-65.670157,-39.278880],[-65.677326,-39.248810],[-65.717340,-39.222930],[-65.720989,-39.212606],[-65.758470,-39.193373],[-65.917689,-39.178782],[-66.007666,-39.189197],[-66.091848,-39.162355],[-66.168072,-39.162253],[-66.246747,-39.111804],[-66.306510,-39.096024],[-66.420475,-39.086171],[-66.511415,-39.087339]],
+                [[-65.662634,-39.285079],[-65.670157,-39.278880],[-65.662634,-39.285079]],
+                [[-64.424203,-39.052418],[-65.662634,-39.285079]],
+                [[-64.422463,-39.052104],[-64.420282,-39.051663]],
+                [[-64.075427,-38.970005],[-63.918945,-38.970427],[-63.793427,-38.944537],[-63.483108,-38.927065],[-62.868197,-38.833722],[-62.812544,-38.839880],[-62.702431,-38.822618]],
+                [[-62.701174,-38.821850],[-62.697691,-38.819443]],
+                [[-62.697691,-38.819443],[-62.693269,-38.816538],[-62.697691,-38.819443]],
+                [[-62.693269,-38.816538],[-62.657405,-38.788210],[-62.571629,-38.755464]],
+                [[-62.569916,-38.754288],[-62.569405,-38.755099]],
+                [[-69.194066,-38.930831],[-69.209512,-38.930109],[-69.194066,-38.930831]],
+                [[-69.194066,-38.930831],[-69.040693,-38.964700],[-68.954469,-38.994288],[-68.897117,-38.988002],[-68.592739,-39.076157]],
+                [[-64.420282,-39.051663],[-64.133876,-38.995633],[-64.100154,-38.970410],[-64.075427,-38.970005]],
+                [[-70.073075,-38.903644],[-70.055766,-38.895425],[-70.073238,-38.903308]],
+                [[-68.356491,-38.979195],[-68.420238,-39.006842],[-68.290693,-38.955620],[-68.038186,-38.959502],[-68.009170,-38.943599],[-68.038174,-38.959589],[-68.288708,-38.955476],[-68.356491,-38.979195]],
+                [[-67.613850,-39.038882],[-67.613951,-39.039412]],
+                [[-67.613850,-39.038882],[-67.613951,-39.039412]],
+                [[-67.615323,-39.039199],[-67.615306,-39.038684]],
+                [[-64.424203,-39.052418],[-64.422463,-39.052104]],
+                [[-64.424203,-39.052418],[-64.422459,-39.052036]],
+                [[-62.702431,-38.822618],[-62.702431,-38.822618]],
+                [[-67.613951,-39.039412],[-67.613850,-39.038882]]
+            ] },
+            { nombre: "RN 23", color: "#ea580c", segmentos: [
+                [[-65.341316,-40.816806],[-65.341339,-40.816852]],
+                [[-69.681744,-41.340642],[-69.809769,-41.364949],[-69.840327,-41.324845],[-69.865907,-41.311874],[-69.885841,-41.289059],[-69.934530,-41.278993],[-69.995783,-41.288145],[-70.027225,-41.274055],[-70.037674,-41.246806],[-70.074060,-41.254165],[-70.097985,-41.248157],[-70.113494,-41.232413],[-70.171395,-41.208351],[-70.179568,-41.192232],[-70.180229,-41.154557],[-70.208958,-41.135912],[-70.210445,-41.106583],[-70.223460,-41.102704],[-70.209859,-41.083950],[-70.210393,-41.049771],[-70.239835,-41.029400],[-70.300824,-41.038348],[-70.336341,-41.070510],[-70.348048,-41.071070],[-70.386683,-41.056500],[-70.468519,-41.046499],[-70.524064,-41.023925],[-70.609926,-41.016983]],
+                [[-71.162198,-41.068554],[-71.113846,-41.076127],[-71.086600,-41.050971],[-71.062462,-41.041114],[-71.036384,-41.057000],[-70.996388,-41.059029],[-70.900127,-41.121943],[-70.868126,-41.112006],[-70.850122,-41.116594],[-70.829305,-41.089761],[-70.758272,-41.120701],[-70.715087,-41.117734],[-70.681890,-41.087795]],
+                [[-71.164261,-41.068539],[-71.162670,-41.067203]],
+                [[-68.089621,-40.842225],[-68.092604,-40.848993]],
+                [[-68.695666,-41.253918],[-68.692789,-41.251461]],
+                [[-68.692789,-41.251461],[-68.695666,-41.253918]],
+                [[-68.692789,-41.251461],[-68.670464,-41.213042],[-68.645367,-41.201122],[-68.636220,-41.180796],[-68.588033,-41.144931],[-68.549045,-41.129047],[-68.467040,-41.120180],[-68.427951,-41.087483],[-68.388466,-41.071263]],
+                [[-68.388466,-41.071263],[-68.385728,-41.069201]],
+                [[-68.093332,-40.850558],[-68.107743,-40.876342],[-68.131185,-40.897134],[-68.287477,-40.991505],[-68.385728,-41.069201]],
+                [[-68.093332,-40.850558],[-68.092604,-40.848993]],
+                [[-65.342978,-40.816391],[-65.749375,-40.860991],[-65.812702,-40.860406],[-65.955374,-40.791862],[-66.012440,-40.783780],[-66.225969,-40.645254],[-66.372670,-40.609474],[-66.394684,-40.596007],[-66.489680,-40.567133],[-66.523611,-40.542363],[-66.537036,-40.506269],[-66.748485,-40.496956],[-66.814896,-40.452918],[-66.959552,-40.451893],[-67.170867,-40.487675],[-67.200194,-40.499592],[-67.266370,-40.502994],[-67.392188,-40.528032],[-67.554836,-40.532021],[-67.761271,-40.580474],[-67.772115,-40.594273],[-67.848644,-40.641361],[-67.841133,-40.684511],[-67.855489,-40.705937],[-67.895325,-40.732226],[-68.041720,-40.759033],[-68.084989,-40.799914],[-68.088876,-40.840601]],
+                [[-68.695666,-41.253918],[-68.755775,-41.281871],[-68.893199,-41.270305],[-69.029588,-41.279863],[-69.113895,-41.301162],[-69.338228,-41.306492],[-69.476081,-41.320742],[-69.544999,-41.336919],[-69.681744,-41.340642]],
+                [[-70.609926,-41.016983],[-70.612658,-41.020337]]
+            ] },
+            { nombre: "RN 3", color: "#2563eb", segmentos: [
+                [[-62.798641,-40.461348],[-62.761437,-40.316053],[-62.647680,-40.227798],[-62.655222,-40.169889]],
+                [[-63.478492,-40.692543],[-63.416740,-40.714089],[-63.369932,-40.743322],[-63.072491,-40.816086],[-63.018000,-40.813430]],
+                [[-62.655502,-40.167915],[-62.666521,-40.096944],[-62.662959,-39.855682],[-62.680312,-39.589518]],
+                [[-63.018000,-40.813430],[-63.003996,-40.802154],[-62.998818,-40.785339],[-63.003935,-40.801710],[-63.018000,-40.813430]],
+                [[-62.998818,-40.785339],[-62.980323,-40.761755],[-62.933375,-40.763394]],
+                [[-62.930905,-40.763067],[-62.871108,-40.717161],[-62.799272,-40.463202]],
+                [[-62.680224,-39.586403],[-62.679911,-39.529471],[-62.672909,-39.513046]],
+                [[-62.672223,-39.511837],[-62.630280,-39.392549]],
+                [[-62.627947,-39.388536],[-62.594168,-39.250881],[-62.598470,-39.227754],[-62.568883,-39.139401],[-62.559275,-39.052890],[-62.487284,-38.868763],[-62.491672,-38.851540],[-62.563862,-38.776801],[-62.568074,-38.756171]],
+                [[-62.566450,-38.753057],[-62.528784,-38.724103]],
+                [[-62.526672,-38.722395],[-62.513164,-38.712785],[-62.388682,-38.688247],[-62.357084,-38.698394]],
+                [[-65.340485,-40.815028],[-65.314688,-40.766943],[-65.139194,-40.750589]],
+                [[-65.137480,-40.750442],[-65.123539,-40.749292]],
+                [[-63.481384,-40.691718],[-63.480639,-40.692222]],
+                [[-65.003142,-40.712099],[-65.005801,-40.713450]],
+                [[-65.001992,-40.712222],[-65.003142,-40.712099]],
+                [[-63.479706,-40.691528],[-63.480121,-40.692187]],
+                [[-64.718478,-40.710754],[-64.148749,-40.705352],[-64.127844,-40.714030],[-63.555256,-40.710882],[-63.482213,-40.692672]],
+                [[-64.999679,-40.712021],[-64.918713,-40.704847],[-64.723534,-40.710783]],
+                [[-65.081625,-42.608950],[-65.194044,-42.326889],[-65.204427,-42.213014],[-65.233214,-42.167419],[-65.291744,-42.112921],[-65.299911,-42.012008],[-65.291359,-42.000293],[-65.310469,-41.981029],[-65.313202,-41.948997],[-65.306617,-41.893062],[-65.289883,-41.858643],[-65.285312,-41.801230],[-65.289256,-41.767867],[-65.323661,-41.664765],[-65.353278,-41.623311],[-65.355757,-41.578706],[-65.370517,-41.565601],[-65.349855,-41.512235],[-65.402534,-40.952196],[-65.342161,-40.818736]],
+                [[-65.123539,-40.749292],[-65.115131,-40.748571],[-65.123539,-40.749292]],
+                [[-65.115131,-40.748571],[-65.046546,-40.742251],[-65.005801,-40.713450]],
+                [[-65.342161,-40.818736],[-65.342161,-40.818736]]
+            ] },
+            { nombre: "RN 40", color: "#7c3aed", segmentos: [
+                [[-70.361430,-38.522578],[-70.358521,-38.514961],[-70.279827,-38.497965],[-70.222700,-38.506027],[-70.154384,-38.485357],[-70.110428,-38.443937],[-70.092383,-38.359171],[-70.074279,-38.338652],[-70.060513,-38.269813],[-70.094133,-38.230080],[-70.093270,-38.211295],[-70.110162,-38.185179],[-70.099540,-38.122276],[-70.075958,-38.088034],[-70.057805,-38.015056],[-70.058342,-37.987342],[-70.075309,-37.938990],[-70.054383,-37.932401],[-70.055274,-37.884538],[-70.074618,-37.812703],[-70.137189,-37.731832],[-70.153668,-37.725620],[-70.161178,-37.606330],[-70.190654,-37.528238],[-70.193279,-37.492331],[-70.213422,-37.472839],[-70.209372,-37.459091],[-70.228881,-37.424742],[-70.228222,-37.403137],[-70.263331,-37.381212],[-70.261121,-37.358979],[-70.275516,-37.330713],[-70.234537,-37.304773],[-70.181963,-37.309896],[-70.142131,-37.335994],[-70.067852,-37.338641],[-70.044564,-37.327750],[-70.044952,-37.336524],[-70.007575,-37.340742],[-69.974491,-37.322358],[-69.918613,-37.313986],[-69.870462,-37.293314],[-69.850265,-37.295732],[-69.798405,-37.256531],[-69.786218,-37.180675],[-69.795878,-37.145465],[-69.807456,-37.142833],[-69.792788,-37.130855],[-69.810351,-37.121130],[-69.838988,-37.071854],[-69.879539,-37.043830],[-69.874156,-37.032654],[-69.820074,-37.002232],[-69.795505,-36.971037],[-69.790655,-36.930157],[-69.823423,-36.901550],[-69.843927,-36.869478],[-69.887777,-36.845531],[-69.911946,-36.820869],[-69.901410,-36.812441],[-69.878778,-36.817794],[-69.852776,-36.800008],[-69.867715,-36.766023],[-69.856032,-36.718242],[-69.838442,-36.717847],[-69.832749,-36.708203],[-69.842669,-36.684785],[-69.826301,-36.663292],[-69.846744,-36.643231],[-69.831048,-36.638066],[-69.837913,-36.633447],[-69.830341,-36.628106],[-69.825040,-36.596275],[-69.835439,-36.590298],[-69.828702,-36.571344]],
+                [[-70.823413,-39.999552],[-70.795761,-40.004819],[-70.774282,-39.996091],[-70.774296,-39.980818],[-70.752304,-39.975395],[-70.735251,-39.928909],[-70.701353,-39.875326],[-70.621154,-39.820142],[-70.608071,-39.794515],[-70.617188,-39.778360],[-70.617929,-39.750322],[-70.586679,-39.740127],[-70.573175,-39.718827],[-70.546560,-39.711900],[-70.465474,-39.730670],[-70.422016,-39.721137],[-70.397443,-39.689329],[-70.404034,-39.651877],[-70.390665,-39.624914],[-70.371254,-39.609552],[-70.314801,-39.525070],[-70.283931,-39.500597],[-70.175951,-39.446792],[-70.185695,-39.433391],[-70.161612,-39.403709],[-70.125836,-39.321297],[-70.088827,-39.274409],[-70.083365,-39.249883],[-70.059601,-39.221021],[-70.065190,-39.197506],[-70.041331,-39.141017],[-70.004416,-39.099882],[-70.005852,-39.064854],[-70.022053,-39.026564],[-70.010934,-39.021106],[-70.076844,-39.013846],[-70.100811,-38.990025],[-70.075902,-38.950361],[-70.081864,-38.914085],[-70.074306,-38.904588]],
+                [[-70.073238,-38.903308],[-70.074306,-38.904588]],
+                [[-70.109570,-38.871423],[-70.180493,-38.795599],[-70.214295,-38.798206],[-70.303275,-38.719622],[-70.324545,-38.658736],[-70.352649,-38.613799],[-70.325017,-38.591631],[-70.325832,-38.576082],[-70.367661,-38.537740]],
+                [[-70.086277,-38.894908],[-70.107853,-38.873131]],
+                [[-70.080313,-38.900882],[-70.084280,-38.896974]],
+                [[-70.074425,-38.903041],[-70.079123,-38.901815]],
+                [[-70.827445,-39.999293],[-70.823413,-39.999552]],
+                [[-70.368970,-38.526495],[-70.361358,-38.522677],[-70.368970,-38.526495]],
+                [[-70.367661,-38.537740],[-70.368970,-38.526495]],
+                [[-70.085913,-38.895237],[-70.085913,-38.895237]],
+                [[-70.079941,-38.901726],[-70.079619,-38.901496]],
+                [[-70.080269,-38.901322],[-70.079941,-38.901726]],
+                [[-70.079619,-38.901496],[-70.080269,-38.901322]],
+                [[-70.074306,-38.904588],[-70.073238,-38.903308]],
+                [[-71.358210,-40.160538],[-71.362659,-40.174028],[-71.395831,-40.176697],[-71.367474,-40.201673],[-71.357095,-40.194667],[-71.355048,-40.203781],[-71.388551,-40.269691],[-71.384286,-40.325188],[-71.442456,-40.345708],[-71.466529,-40.389520],[-71.513060,-40.427994],[-71.528974,-40.431175],[-71.552018,-40.450539],[-71.575671,-40.452869],[-71.584633,-40.465347],[-71.582626,-40.484310],[-71.599042,-40.489890],[-71.627173,-40.476374],[-71.648319,-40.498506],[-71.658337,-40.579655],[-71.645996,-40.600709],[-71.649665,-40.624255],[-71.658797,-40.626829],[-71.702486,-40.600579],[-71.710343,-40.608684],[-71.704974,-40.660992],[-71.691389,-40.684540],[-71.695969,-40.691844]],
+                [[-71.307841,-40.148178],[-71.307978,-40.147960]],
+                [[-71.308292,-40.148059],[-71.307978,-40.147960]],
+                [[-71.259709,-41.158958],[-71.234996,-41.148981],[-71.220827,-41.121100]],
+                [[-71.155469,-41.032037],[-71.234379,-41.040875],[-71.332876,-41.025244],[-71.356161,-40.946753],[-71.434668,-40.924979],[-71.471621,-40.896366],[-71.489933,-40.900734],[-71.526243,-40.842391],[-71.559954,-40.830694],[-71.619577,-40.769208],[-71.640092,-40.763219]],
+                [[-71.536837,-41.966811],[-71.536443,-41.931689],[-71.521334,-41.914681],[-71.487405,-41.885114],[-71.440743,-41.866703],[-71.419199,-41.838549],[-71.435881,-41.787953],[-71.430103,-41.774768],[-71.443830,-41.762411],[-71.441673,-41.753675],[-71.476574,-41.744696],[-71.434585,-41.699781],[-71.447507,-41.694023],[-71.460461,-41.658231],[-71.455522,-41.623959],[-71.499106,-41.578934],[-71.480679,-41.556416],[-71.460526,-41.546056],[-71.458173,-41.527789],[-71.467655,-41.526111],[-71.454199,-41.519686],[-71.470032,-41.510191],[-71.471301,-41.471339],[-71.481809,-41.458635],[-71.501292,-41.385791],[-71.516686,-41.364605],[-71.492072,-41.310386],[-71.496959,-41.269410],[-71.422363,-41.232879],[-71.387919,-41.186814],[-71.338668,-41.172480]],
+                [[-71.124281,-42.852045],[-71.115959,-42.819317],[-71.122822,-42.782542],[-71.096902,-42.734847],[-71.009374,-42.697618],[-71.041463,-42.668669],[-71.069327,-42.667429],[-71.080474,-42.658084],[-71.080892,-42.642283],[-71.065379,-42.627315],[-71.078453,-42.621489],[-71.079523,-42.609103],[-71.067999,-42.575291],[-71.101982,-42.535462],[-71.094135,-42.482796],[-71.112307,-42.375295]],
+                [[-71.336609,-41.172670],[-71.317479,-41.181474],[-71.299990,-41.171547]],
+                [[-71.225682,-41.115610],[-71.187920,-41.101572],[-71.182933,-41.084064],[-71.164261,-41.068539]],
+                [[-71.300788,-40.142485],[-71.233384,-40.118959],[-71.218593,-40.127958],[-71.189750,-40.125883],[-71.130573,-40.083551],[-71.078170,-40.062013],[-71.091786,-40.025017],[-71.077169,-39.953858]],
+                [[-70.827445,-39.999293],[-70.840255,-39.999070],[-70.848792,-39.989356],[-70.876508,-39.991780],[-70.917587,-39.949703],[-70.959860,-39.932972],[-71.017830,-39.929723],[-71.069544,-39.913282],[-71.073689,-39.944603]],
+                [[-71.164261,-41.068539],[-71.162670,-41.067203]],
+                [[-71.162670,-41.067203],[-71.148326,-41.054943],[-71.156257,-41.044708],[-71.153577,-41.034106]],
+                [[-71.134584,-42.321163],[-71.232972,-42.293134],[-71.275909,-42.292504],[-71.301356,-42.302967],[-71.353163,-42.292087],[-71.362622,-42.268642],[-71.347014,-42.225992],[-71.396356,-42.199779],[-71.403396,-42.172392],[-71.399672,-42.141926],[-71.438426,-42.115408],[-71.443438,-42.102524],[-71.475064,-42.094168],[-71.515799,-42.069364]],
+                [[-71.112307,-42.375295],[-71.108137,-42.349658],[-71.131958,-42.322613]],
+                [[-71.307457,-40.147807],[-71.303666,-40.143950]]
+            ] },
+            { nombre: "RN 250", color: "#0891b2", segmentos: [
+                [[-65.671363,-39.285302],[-65.719205,-39.329775]],
+                [[-65.721402,-39.332709],[-65.721402,-39.332709]],
+                [[-65.721402,-39.332709],[-65.701312,-39.405195],[-65.689756,-39.414808]],
+                [[-64.474387,-40.109316],[-64.475181,-40.109168]],
+                [[-64.472921,-40.109312],[-64.474387,-40.109316]],
+                [[-64.476570,-40.108508],[-64.474918,-40.108517]],
+                [[-64.472921,-40.109312],[-64.404558,-40.117218],[-64.373745,-40.140673],[-64.257271,-40.196457],[-64.199774,-40.235944],[-64.140636,-40.292665],[-64.065169,-40.291817],[-63.979066,-40.332161],[-63.922912,-40.406292],[-63.897330,-40.427448],[-63.730441,-40.480287],[-63.619917,-40.534324],[-63.582612,-40.568796],[-63.557230,-40.615308],[-63.482085,-40.690367]],
+                [[-65.687720,-39.416396],[-65.604864,-39.479689],[-65.616470,-39.512665],[-65.585631,-39.557631],[-65.489999,-39.633926],[-65.473684,-39.687093],[-65.409964,-39.774160],[-65.438593,-39.879679],[-65.450506,-39.892925],[-65.418836,-39.923224],[-65.329556,-39.966515],[-65.260878,-39.958098],[-65.050678,-39.899974],[-65.014264,-39.899363],[-64.955288,-39.916717],[-64.899876,-39.955570],[-64.768874,-40.012734],[-64.717456,-40.025224],[-64.654176,-40.065171],[-64.476570,-40.108508]]
+            ] },
+            { nombre: "RN 151", color: "#65a30d", segmentos: [
+                [[-68.019186,-38.913645],[-68.060620,-38.861566],[-68.072951,-38.833122]],
+                [[-68.103204,-38.755513],[-68.142487,-38.728125],[-68.160062,-38.727517]],
+                [[-68.077924,-38.822190],[-68.085318,-38.782155],[-68.101191,-38.758460]],
+                [[-68.074077,-38.830734],[-68.076867,-38.824760]],
+                [[-67.842127,-37.884352],[-67.749644,-37.814649],[-67.743707,-37.790495],[-67.770533,-37.728590],[-67.764481,-37.722403]],
+                [[-68.167151,-38.709798],[-68.047702,-38.465413],[-67.976074,-38.208228],[-67.963659,-38.195836],[-67.932287,-38.125631],[-67.907612,-37.980246],[-67.863456,-37.903712],[-67.845123,-37.886931]],
+                [[-68.162398,-38.724831],[-68.166272,-38.713076]],
+                [[-67.762544,-37.720381],[-67.746586,-37.682642],[-67.758012,-37.630043],[-67.693240,-37.440375],[-67.620242,-37.337225],[-67.466238,-36.898399],[-67.313823,-36.659914],[-67.283168,-36.592516],[-67.212696,-36.534318],[-67.160728,-36.417130],[-67.080761,-36.380948]],
+                [[-68.017719,-38.916995],[-68.014448,-38.923010],[-68.017309,-38.916786]],
+                [[-68.014448,-38.923010],[-68.011394,-38.941729]]
+            ] },
+        ];
+
+        const TOPOJSON_URL = "https://raw.githubusercontent.com/mgaitan/departamentos_argentina/master/departamentos-argentina.topojson";
+        const W = 960, H = 700;
+
+        let currentZoom = 1;
+        let zoomOffset = [0, 0];
+        let isPanning = false, panStart = [0, 0];
+        let activeAnexo = null;
+        let projectionFn, pathFn;
+        let corredoresVisible = true;
+        let rutasVisible = false;
+
+        const mapDiv = document.getElementById('map');
+        const svg = d3.select('#map').append('svg')
+            .attr('viewBox', `0 0 ${W} ${H}`)
+            .style('display', 'block');
+        const gMain = svg.append('g');
+        const gDepts = gMain.append('g');
+        const gProvince = gMain.append('g');
+        const gRutas = gMain.append('g');
+        const gCorredores = gMain.append('g');
+        const gMarkers = gMain.append('g');
+        const loading = document.getElementById('loading');
+        const popup = document.getElementById('popup');
+        const tooltip = document.getElementById('tooltip');
+
+        // --- Corredor panel ---
+        function showCorredorPanel(c) {
+            hidePopup();
+            const panel = document.getElementById('corredorPanel');
+            document.getElementById('corredorPanelColor').style.background = c.color;
+            document.getElementById('corredorPanelTitle').textContent = c.nombre;
+
+            const nombres = c.anexosNums.map(num => {
+                const a = ANEXOS.find(x => x.num === num);
+                return a ? a.nombre : null;
+            }).filter(Boolean).join(', ');
+            document.getElementById('corredorPanelAnexos').textContent = nombres;
+
+            const saved = loadCorredorInfo(c.id);
+            const p = saved && saved.patrimonio != null ? saved.patrimonio : c.patrimonio || '';
+            const f = saved && saved.fiestas != null ? saved.fiestas : c.fiestas || '';
+            const idv = saved && saved.identidad != null ? saved.identidad : c.identidad || '';
+
+            ['cp-patrimonio', 'cp-fiestas', 'cp-identidad'].forEach(sid => {
+                const el = document.getElementById(sid);
+                el.dataset.corredorId = c.id;
+                el.contentEditable = false;
+                el.style.borderColor = '#e2e8f0';
+                el.style.background = '#f8fafc';
+            });
+            document.getElementById('cp-patrimonio').innerHTML = p;
+            document.getElementById('cp-fiestas').innerHTML = f;
+            document.getElementById('cp-identidad').innerHTML = idv;
+
+            document.getElementById('corredorPanelEditBtn').style.display = '';
+            document.getElementById('corredorPanelSaveBtn').style.display = 'none';
+            document.getElementById('corredorPanelCancelBtn').style.display = 'none';
+
+            panel.classList.add('visible');
+        }
+
+        function hideCorredorPanel() {
+            document.getElementById('corredorPanel').classList.remove('visible');
+        }
+
+        function loadCorredorInfo(id) {
+            try {
+                const all = JSON.parse(localStorage.getItem('esrn_corredores_info') || '{}');
+                return all[String(id)] || {};
+            } catch(e) { return {}; }
+        }
+
+        function saveCorredorInfo(id, data) {
+            try {
+                const all = JSON.parse(localStorage.getItem('esrn_corredores_info') || '{}');
+                all[String(id)] = data;
+                localStorage.setItem('esrn_corredores_info', JSON.stringify(all));
+            } catch(e) {}
+        }
+
+        document.getElementById('corredorPanelClose').addEventListener('click', hideCorredorPanel);
+
+        document.getElementById('corredorPanelEditBtn').addEventListener('click', () => {
+            ['cp-patrimonio', 'cp-fiestas', 'cp-identidad'].forEach(sid => {
+                const el = document.getElementById(sid);
+                el.contentEditable = true;
+                el.style.borderColor = 'var(--celeste-linea)';
+                el.style.background = 'white';
+            });
+            document.getElementById('cp-patrimonio').focus();
+            document.getElementById('corredorPanelEditBtn').style.display = 'none';
+            document.getElementById('corredorPanelSaveBtn').style.display = '';
+            document.getElementById('corredorPanelCancelBtn').style.display = '';
+        });
+
+        document.getElementById('corredorPanelSaveBtn').addEventListener('click', () => {
+            const id = document.getElementById('cp-patrimonio').dataset.corredorId;
+            const data = {
+                patrimonio: document.getElementById('cp-patrimonio').innerHTML,
+                fiestas: document.getElementById('cp-fiestas').innerHTML,
+                identidad: document.getElementById('cp-identidad').innerHTML
+            };
+            saveCorredorInfo(id, data);
+            ['cp-patrimonio', 'cp-fiestas', 'cp-identidad'].forEach(sid => {
+                const el = document.getElementById(sid);
+                el.contentEditable = false;
+                el.style.borderColor = '#e2e8f0';
+                el.style.background = '#f8fafc';
+            });
+            document.getElementById('corredorPanelEditBtn').style.display = '';
+            document.getElementById('corredorPanelSaveBtn').style.display = 'none';
+            document.getElementById('corredorPanelCancelBtn').style.display = 'none';
+        });
+
+        document.getElementById('corredorPanelCancelBtn').addEventListener('click', () => {
+            const id = document.getElementById('cp-patrimonio').dataset.corredorId;
+            const c = CORREDORES.find(x => x.id === parseInt(id));
+            const saved = loadCorredorInfo(id);
+            if (c) {
+                document.getElementById('cp-patrimonio').innerHTML = (saved.patrimonio != null ? saved.patrimonio : c.patrimonio) || '';
+                document.getElementById('cp-fiestas').innerHTML = (saved.fiestas != null ? saved.fiestas : c.fiestas) || '';
+                document.getElementById('cp-identidad').innerHTML = (saved.identidad != null ? saved.identidad : c.identidad) || '';
+            }
+            ['cp-patrimonio', 'cp-fiestas', 'cp-identidad'].forEach(sid => {
+                const el = document.getElementById(sid);
+                el.contentEditable = false;
+                el.style.borderColor = '#e2e8f0';
+                el.style.background = '#f8fafc';
+            });
+            document.getElementById('corredorPanelEditBtn').style.display = '';
+            document.getElementById('corredorPanelSaveBtn').style.display = 'none';
+            document.getElementById('corredorPanelCancelBtn').style.display = 'none';
+        });
+
+        // --- Popup functions ---
+        function buildPopupContent(a) {
+            const hdr = document.getElementById('popupHeader');
+            const title = document.getElementById('popupTitle');
+            const body = document.getElementById('popupBody');
+            hdr.style.background = a.color;
+            title.textContent = a.sede ? '🏢 Sede Central' : `Anexo N° ${a.num}`;
+            let html = `
+                <div class="popup-row"><span class="popup-label">Localidad</span><span class="popup-value">${a.nombre}</span></div>
+                <div class="popup-row"><span class="popup-label">Departamento</span><span class="popup-value">${a.depto}</span></div>
+            `;
+            if (!a.sede) {
+                html += `<div class="popup-row"><span class="popup-label">Anexo N°</span><span class="popup-value">${a.num}</span></div>`;
+            }
+            const dist = distViedma(a);
+            html += `<div class="popup-row"><span class="popup-label">Dist. a Viedma</span><span class="popup-value">~${dist} km</span></div>`;
+            html += `<div style="margin-top:8px;display:flex;gap:6px;align-items:center;font-size:0.8rem">
+                <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${a.color};border:2px solid white;box-shadow:0 0 0 1px rgba(0,0,0,0.1)"></span>
+                <span style="color:#64748b">Color distintivo</span>
+            </div>`;
+            body.innerHTML = html;
+        }
+
+        function distViedma(a) {
+            const dlat = a.lat - (-40.81345);
+            const dlon = a.lon - (-62.99668);
+            const km = Math.round(Math.sqrt(dlat*dlat + dlon*dlon) * 111.32);
+            return km;
+        }
+
+        function showPopup(a, x, y) {
+            activeAnexo = a;
+            buildPopupContent(a);
+            popup.classList.add('visible');
+            const rect = mapDiv.getBoundingClientRect();
+            let px = (x != null) ? x : rect.width / 2 - 110;
+            let py = (y != null) ? y - 10 : rect.height / 2 - 60;
+            if (px + 220 > rect.width) px = rect.width - 230;
+            if (px < 10) px = 10;
+            if (py < 10) py = (y != null ? y : rect.height / 2) + 20;
+            popup.style.left = px + 'px';
+            popup.style.top = py + 'px';
+            highlightSidebar(a);
+        }
+
+        function hidePopup() {
+            popup.classList.remove('visible');
+            activeAnexo = null;
+            clearSidebarHighlight();
+        }
+
+        document.getElementById('popupClose').addEventListener('click', hidePopup);
+
+        function showTooltip(text, x, y) {
+            tooltip.textContent = text;
+            tooltip.classList.add('visible');
+            tooltip.style.left = (x + 12) + 'px';
+            tooltip.style.top = (y - 10) + 'px';
+        }
+
+        function hideTooltip() {
+            tooltip.classList.remove('visible');
+        }
+
+        function projectPoint(lon, lat) {
+            return projectionFn ? projectionFn([lon, lat]) : null;
+        }
+
+        // --- Corredores drawing ---
+        function drawCorredores() {
+            gCorredores.selectAll('*').remove();
+            if (!projectionFn) return;
+
+            CORREDORES.forEach(c => {
+                const anexos = c.anexosNums.map(num => ANEXOS.find(a => a.num === num)).filter(Boolean);
+                if (anexos.length === 0) return;
+
+                if (anexos.length === 1) {
+                    const a = anexos[0];
+                    const p = projectionFn([a.lon, a.lat]);
+                    if (!p) return;
+                    // Fill glow
+                    gCorredores.append('circle')
+                        .attr('cx', p[0]).attr('cy', p[1])
+                        .attr('r', 20)
+                        .attr('fill', c.color)
+                        .attr('opacity', 0.12)
+                        .attr('class', 'corredor-glow')
+                        .attr('data-corredor', c.id);
+                    // Ring
+                    gCorredores.append('circle')
+                        .attr('cx', p[0]).attr('cy', p[1])
+                        .attr('r', 18)
+                        .attr('fill', 'none')
+                        .attr('stroke', c.color)
+                        .attr('stroke-width', 3)
+                        .attr('stroke-dasharray', '5,4')
+                        .attr('opacity', 0.7)
+                        .attr('class', 'corredor-ring')
+                        .attr('data-corredor', c.id)
+                        .style('cursor', 'pointer')
+                        .on('click', (event) => { event.stopPropagation(); showCorredorPanel(c); })
+                        .on('mouseenter', function() {
+                            d3.select(this).attr('opacity', 1).attr('stroke-width', 4.5);
+                            d3.select(this.parentNode).select('.corredor-glow[data-corredor="' + c.id + '"]').attr('opacity', 0.2);
+                        })
+                        .on('mouseleave', function() {
+                            d3.select(this).attr('opacity', 0.7).attr('stroke-width', 3);
+                            d3.select(this.parentNode).select('.corredor-glow[data-corredor="' + c.id + '"]').attr('opacity', 0.12);
+                        });
+                    return;
+                }
+
+                const sorted = [...anexos].sort((a, b) => b.lat - a.lat);
+                const points = sorted.map(a => projectionFn([a.lon, a.lat])).filter(Boolean);
+                if (points.length < 2) return;
+
+                const lineGen = d3.line().x(d => d[0]).y(d => d[1]).curve(d3.curveCatmullRom);
+
+                // Invisible hit area (wide for easy clicking)
+                gCorredores.append('path')
+                    .attr('d', lineGen(points))
+                    .attr('fill', 'none')
+                    .attr('stroke', 'transparent')
+                    .attr('stroke-width', 28)
+                    .attr('class', 'corredor-hit')
+                    .attr('data-corredor', c.id)
+                    .style('cursor', 'pointer')
+                    .attr('stroke-linecap', 'round')
+                    .attr('stroke-linejoin', 'round')
+                    .on('click', (event) => { event.stopPropagation(); showCorredorPanel(c); })
+                    .on('mouseenter', function() {
+                        const pid = c.id;
+                        d3.select(this.parentNode).select('.corredor-band[data-corredor="'+pid+'"]').attr('opacity', 0.35);
+                        d3.select(this.parentNode).select('.corredor-outline[data-corredor="'+pid+'"]').attr('opacity', 0.9).attr('stroke-width', 3);
+                    })
+                    .on('mouseleave', function() {
+                        const pid = c.id;
+                        d3.select(this.parentNode).select('.corredor-band[data-corredor="'+pid+'"]').attr('opacity', 0.2);
+                        d3.select(this.parentNode).select('.corredor-outline[data-corredor="'+pid+'"]').attr('opacity', 0.55).attr('stroke-width', 1.5);
+                    });
+
+                // Thick semi-transparent band
+                gCorredores.append('path')
+                    .attr('d', lineGen(points))
+                    .attr('fill', 'none')
+                    .attr('stroke', c.color)
+                    .attr('stroke-width', 14)
+                    .attr('opacity', 0.2)
+                    .attr('class', 'corredor-band')
+                    .attr('data-corredor', c.id)
+                    .style('pointer-events', 'none')
+                    .attr('stroke-linecap', 'round')
+                    .attr('stroke-linejoin', 'round');
+
+                // Thin border outline
+                gCorredores.append('path')
+                    .attr('d', lineGen(points))
+                    .attr('fill', 'none')
+                    .attr('stroke', c.color)
+                    .attr('stroke-width', 1.5)
+                    .attr('opacity', 0.55)
+                    .attr('class', 'corredor-outline')
+                    .attr('data-corredor', c.id)
+                    .style('pointer-events', 'none')
+                    .attr('stroke-linecap', 'round')
+                    .attr('stroke-linejoin', 'round');
+            });
+
+            gCorredores.style('display', corredoresVisible ? null : 'none');
+        }
+
+        function toggleCorredores() {
+            corredoresVisible = !corredoresVisible;
+            gCorredores.style('display', corredoresVisible ? null : 'none');
+            const btn = document.getElementById('toggleCorredores');
+            btn.classList.toggle('active', corredoresVisible);
+            btn.classList.toggle('inactive', !corredoresVisible);
+            btn.querySelector('.label').textContent = corredoresVisible ? 'Corredores' : 'Ocultos';
+            btn.title = corredoresVisible ? 'Ocultar corredores' : 'Mostrar corredores';
+        }
+
+        function toggleRutas() {
+            rutasVisible = !rutasVisible;
+            gRutas.style('display', rutasVisible ? null : 'none');
+            const btn = document.getElementById('toggleRutas');
+            btn.classList.toggle('active', rutasVisible);
+            btn.classList.toggle('inactive', !rutasVisible);
+            btn.querySelector('.label').textContent = rutasVisible ? 'Rutas' : 'Rutas';
+            btn.title = rutasVisible ? 'Ocultar rutas' : 'Mostrar rutas';
+        }
+
+        // --- Map rendering ---
+        function renderMap() {
+            d3.json(TOPOJSON_URL).then(topo => {
+                const geojson = topojson.feature(topo, topo.objects['departamentos-argentina']);
+                const rnFeatures = geojson.features.filter(d => d.properties.provincia === 'RIO NEGRO');
+
+                projectionFn = d3.geoMercator()
+                    .center([-67.4, -39.8])
+                    .fitSize([W * 0.88, H * 0.88], { type: 'FeatureCollection', features: rnFeatures });
+                pathFn = d3.geoPath().projection(projectionFn);
+
+                const deptsPath = gDepts.selectAll('path')
+                    .data(rnFeatures)
+                    .join('path')
+                    .attr('class', 'dept-path')
+                    .attr('d', pathFn);
+
+                gProvince.append('path')
+                    .attr('class', 'province-path')
+                    .attr('d', pathFn({ type: 'FeatureCollection', features: rnFeatures }));
+
+                const lineGen = d3.line().x(d => d[0]).y(d => d[1]);
+                RUTAS.forEach(r => {
+                    r.segmentos.forEach(seg => {
+                        const pts = seg.map(p => projectionFn(p)).filter(Boolean);
+                        if (pts.length < 2) return;
+                        gRutas.append('path')
+                            .attr('d', lineGen(pts))
+                            .attr('fill', 'none')
+                            .attr('stroke', r.color)
+                            .attr('stroke-width', 2)
+                            .attr('opacity', 0.55)
+                            .attr('stroke-linecap', 'round')
+                            .attr('stroke-linejoin', 'round')
+                            .attr('class', 'ruta-path');
+                    });
+                    // Label on longest segment
+                    let bestPts = null;
+                    r.segmentos.forEach(seg => {
+                        const pts = seg.map(p => projectionFn(p)).filter(Boolean);
+                        if (pts.length > (bestPts ? bestPts.length : 0)) bestPts = pts;
+                    });
+                    if (bestPts && bestPts.length >= 2) {
+                        const mid = Math.floor(bestPts.length / 2);
+                        gRutas.append('text')
+                            .attr('x', bestPts[mid][0])
+                            .attr('y', bestPts[mid][1] - 6)
+                            .attr('text-anchor', 'middle')
+                            .attr('fill', r.color)
+                            .attr('font-size', '10px')
+                            .attr('font-weight', '700')
+                            .attr('font-family', 'Roboto Condensed, sans-serif')
+                            .attr('opacity', 0.7)
+                            .attr('class', 'ruta-label')
+                            .text(r.nombre);
+                    }
+                });
+                gRutas.style('display', 'none');
+
+                ANEXOS.forEach(a => {
+                    const p = projectionFn([a.lon, a.lat]);
+                    if (!p) return;
+
+                    const g = gMarkers.append('g')
+                        .attr('class', 'marker-group')
+                        .attr('transform', `translate(${p[0]},${p[1]})`);
+
+                    g.append('circle')
+                        .attr('class', 'marker-circle' + (a.sede ? ' sede-circle' : ''))
+                        .attr('r', a.sede ? 10 : 8)
+                        .attr('fill', a.color);
+
+                    g.append('circle')
+                        .attr('class', 'marker-pulse')
+                        .attr('r', a.sede ? 14 : 11)
+                        .attr('stroke', a.color);
+
+                    g.append('text')
+                        .attr('class', 'marker-label')
+                        .attr('dy', a.sede ? -16 : -14)
+                        .attr('text-anchor', 'middle')
+                        .text(a.nombre);
+
+                    g.on('mouseenter', (event) => {
+                        const rect = mapDiv.getBoundingClientRect();
+                        showTooltip(`Anexo ${a.num ? a.num + ' - ' : ''}${a.nombre}`, event.clientX - rect.left, event.clientY - rect.top);
+                    });
+                    g.on('mousemove', (event) => {
+                        const rect = mapDiv.getBoundingClientRect();
+                        showTooltip(`Anexo ${a.num ? a.num + ' - ' : ''}${a.nombre}`, event.clientX - rect.left, event.clientY - rect.top);
+                    });
+                    g.on('mouseleave', hideTooltip);
+                    g.on('click', (event) => {
+                        event.stopPropagation();
+                        const rect = mapDiv.getBoundingClientRect();
+                        showPopup(a, event.clientX - rect.left, event.clientY - rect.top);
+                    });
+                });
+
+                drawCorredores();
+                document.getElementById('toggleCorredores').classList.add('active');
+
+                svg.on('click', () => { hidePopup(); hideCorredorPanel(); });
+                loading.style.display = 'none';
+                document.getElementById('totalAnexos').textContent = ANEXOS.length - 1;
+                document.getElementById('totalCorredores').textContent = CORREDORES.length;
+                buildSidebar();
+
+            }).catch(err => {
+                loading.innerHTML = '❌ Error al cargar el mapa. <br><small>' + err.message + '</small>';
+                console.error(err);
+            });
+        }
+
+        // --- Sidebar ---
+        function buildSidebar() {
+            const list = document.getElementById('sidebarList');
+            list.innerHTML = '';
+            ANEXOS.forEach(a => {
+                const div = document.createElement('div');
+                div.className = 'sidebar-item';
+                div.dataset.num = a.num;
+                div.innerHTML = `
+                    <span class="num">${a.sede ? '★' : 'N°'+a.num}</span>
+                    <span class="dot" style="background:${a.color}"></span>
+                    <div class="info">
+                        <div class="name">${a.nombre}</div>
+                        <div class="loc">${a.depto} ${a.sede ? '· Sede Central' : ''}</div>
+                    </div>
+                `;
+                div.addEventListener('click', () => {
+                    const p = projectPoint(a.lon, a.lat);
+                    if (!p) return;
+                    const targetZoom = 1.5;
+                    const tx = W/2 - p[0] * targetZoom;
+                    const ty = H/2 - p[1] * targetZoom;
+                    zoomOffset = [tx, ty];
+                    currentZoom = targetZoom;
+                    gMain.transition().duration(500).attr('transform', `translate(${tx},${ty}) scale(${targetZoom})`);
+                    showPopup(a, null, null);
+                });
+                list.appendChild(div);
+            });
+        }
+
+        function filterList() {
+            const q = document.getElementById('searchInput').value.toLowerCase();
+            const items = document.querySelectorAll('.sidebar-item');
+            items.forEach(el => {
+                const text = el.textContent.toLowerCase();
+                el.style.display = text.includes(q) ? 'flex' : 'none';
+            });
+        }
+
+        function highlightSidebar(a) {
+            document.querySelectorAll('.sidebar-item').forEach(el => {
+                const num = parseInt(el.dataset.num);
+                if (num === a.num && !a.sede || (a.sede && el.dataset.num === '0')) {
+                    el.classList.add('active');
+                } else {
+                    el.classList.remove('active');
+                }
+            });
+        }
+
+        function clearSidebarHighlight() {
+            document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
+        }
+
+        // --- Zoom / Pan ---
+        function zoomToCenter(factor) {
+            const rect = mapDiv.getBoundingClientRect();
+            const cx = rect.width / 2, cy = rect.height / 2;
+            const newZoom = Math.max(0.5, Math.min(8, currentZoom * factor));
+            const scale = newZoom / currentZoom;
+            zoomOffset = [cx - (cx - zoomOffset[0]) * scale, cy - (cy - zoomOffset[1]) * scale];
+            currentZoom = newZoom;
+            gMain.transition().duration(300).attr('transform', `translate(${zoomOffset[0]},${zoomOffset[1]}) scale(${currentZoom})`);
+        }
+
+        document.getElementById('toggleCorredores').addEventListener('click', toggleCorredores);
+        document.getElementById('toggleRutas').addEventListener('click', toggleRutas);
+        document.getElementById('zoomIn').addEventListener('click', () => zoomToCenter(1.4));
+        document.getElementById('zoomOut').addEventListener('click', () => zoomToCenter(1 / 1.4));
+
+        document.getElementById('zoomReset').addEventListener('click', () => {
+            currentZoom = 1;
+            zoomOffset = [0, 0];
+            gMain.transition().duration(400).attr('transform', 'translate(0,0) scale(1)');
+            hidePopup();
+            hideCorredorPanel();
+        });
+
+        svg.on('mousedown', (event) => {
+            if (event.target.closest('.marker-group')) return;
+            if (event.target.closest('.corredor-hit')) return;
+            if (event.target.closest('.corredor-ring')) return;
+            isPanning = true;
+            panStart = [event.clientX - zoomOffset[0], event.clientY - zoomOffset[1]];
+            svg.style('cursor', 'grabbing');
+        });
+
+        d3.select(window).on('mousemove', (event) => {
+            if (!isPanning) return;
+            zoomOffset = [event.clientX - panStart[0], event.clientY - panStart[1]];
+            gMain.attr('transform', `translate(${zoomOffset[0]},${zoomOffset[1]}) scale(${currentZoom})`);
+        });
+
+        d3.select(window).on('mouseup', () => {
+            isPanning = false;
+            svg.style('cursor', 'grab');
+        });
+
+        svg.on('wheel', (event) => {
+            event.preventDefault();
+            const rect = mapDiv.getBoundingClientRect();
+            const mx = event.clientX - rect.left;
+            const my = event.clientY - rect.top;
+            const delta = event.deltaY > 0 ? 0.85 : 1.18;
+            const newZoom = Math.max(0.5, Math.min(8, currentZoom * delta));
+            const scale = newZoom / currentZoom;
+            const tx = mx - (mx - zoomOffset[0]) * scale;
+            const ty = my - (my - zoomOffset[1]) * scale;
+            zoomOffset = [tx, ty];
+            currentZoom = newZoom;
+            gMain.transition().duration(150).attr('transform', `translate(${zoomOffset[0]},${zoomOffset[1]}) scale(${currentZoom})`);
+        }, { passive: false });
+
+        renderMap();
+    </script>
+</body>
+</html>
