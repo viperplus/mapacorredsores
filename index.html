@@ -126,12 +126,15 @@
             text-shadow: 0 0 4px white, 0 0 4px white, 0 0 4px white;
         }
 
-        .corredor-ring {
+        .corredor-ring-group {
             cursor: pointer;
+        }
+
+        .corredor-ring {
             transition: opacity 0.2s;
         }
 
-        .corredor-ring:hover {
+        .corredor-ring-group:hover .corredor-ring {
             opacity: 1 !important;
         }
 
@@ -274,7 +277,7 @@
         }
 
         .corredor-panel-section {
-            margin-bottom: 12px;
+            margin-bottom: 24px;
         }
 
         .corredor-panel-section label {
@@ -654,20 +657,40 @@
                     </div>
                     <div class="corredor-panel-body">
                         <div class="corredor-panel-section">
-                            <label>Anexos</label>
+                            <label><span class="icon-location">📍</span> Anexos</label>
                             <div class="value" id="corredorPanelAnexos"></div>
                         </div>
                         <div class="corredor-panel-section">
-                            <label>Patrimonio Geográfico</label>
+                            <label><span class="icon-mountain">🏔️</span> Patrimonio Geográfico</label>
                             <div class="corredor-panel-info" id="cp-patrimonio" contenteditable="false"></div>
                         </div>
                         <div class="corredor-panel-section">
-                            <label>Fiestas</label>
+                            <label><span class="icon-fiesta">🎉</span> Fiestas</label>
                             <div class="corredor-panel-info" id="cp-fiestas" contenteditable="false"></div>
                         </div>
                         <div class="corredor-panel-section">
-                            <label>Aspectos Identitarios</label>
+                            <label><span class="icon-identidad">🧬</span> Aspectos Identitarios</label>
                             <div class="corredor-panel-info" id="cp-identidad" contenteditable="false"></div>
+                        </div>
+                        <div class="corredor-panel-section">
+                            <label><span class="icon-flora">🌿</span> Flora</label>
+                            <div class="corredor-panel-info" id="cp-flora" contenteditable="false"></div>
+                        </div>
+                        <div class="corredor-panel-section">
+                            <label><span class="icon-fauna">🐾</span> Fauna</label>
+                            <div class="corredor-panel-info" id="cp-fauna" contenteditable="false"></div>
+                        </div>
+                        <div class="corredor-panel-section">
+                            <label><span class="icon-emprend">💡</span> Ejemplos de Emprendimientos</label>
+                            <div class="corredor-panel-info" id="cp-emprendimientos" contenteditable="false"></div>
+                        </div>
+                        <div class="corredor-panel-section">
+                            <label><span class="icon-sustentable">🌱</span> Opción Sustentable (Recurso)</label>
+                            <div class="corredor-panel-info" id="cp-opcionSustentable" contenteditable="false"></div>
+                        </div>
+                        <div class="corredor-panel-section">
+                            <label><span class="icon-sostenible">🤝</span> Opción Sostenible (Comunidad)</label>
+                            <div class="corredor-panel-info" id="cp-opcionSostenible" contenteditable="false"></div>
                         </div>
                     </div>
                     <div class="corredor-panel-actions">
@@ -747,63 +770,106 @@
                 color: "#f59e0b", anexosNums: [23],
                 patrimonio: "Cuenca artificial del Embalse Ingeniero Ballester, oasis de riego y bardas de areniscas rojas.",
                 fiestas: "Fiesta Provincial de la Pera (Allen) y eventos náuticos de apertura de temporada.",
-                identidad: "Ingeniería hidráulica de principios del siglo XX, pioneros del riego y recreación en el Alto Valle."
+                identidad: "Ingeniería hidráulica de principios del siglo XX, pioneros del riego y recreación en el Alto Valle.",
+                flora: "Vegetación xerófila de barda y transición al oasis: jarilla (Larrea), alpataco, matasebo y pastos duros en las zonas altas; sauces, juncos y cortaderas en la línea de agua del perilago.",
+                fauna: "Gran diversidad de avifauna lacustre y de barda: cisnes de cuello negro, flamencos australes, macaes, garzas y patos. En las bardas circundantes habitan lagartijas, yararás chicas, zorros grises y quirquinchos.",
+                emprendimientos: "Opción A - Albergue de Semillas y Senderismo de Barda: Los estudiantes recolectan y clasifican fósiles vegetales (maderas petrificadas frecuentes en las areniscas) y arcillas locales para armar un pequeño 'Museo de Sitio' en un aula de la escuela. Ofrecen visitas guiadas cortas a pie por las bardas para explicar la geología del lugar.\n\nOpción B - Puesto de Refresco del Perilago: Fabricación de jugos y conservas naturales utilizando la fruta de descarte de las chacras de Allen (peras y manzanas). Los chicos instalan un puesto rústico con sombrillas de totora tejidas por ellos mismos en la zona de playas para abastecer a los caminantes.",
+                opcionSustentable: "Opción Sustentable (Recurso): Vivero Escolar de Nativas y Control de Erosión de Bardas.\nLos estudiantes recolectan semillas de jarilla, alpataco y matasebo en las bardas. Producen plantines en la escuela y los venden a los visitantes del perilago para concientizar sobre la fijación del suelo y el cuidado de la flora autóctona frente a la degradación por vehículos.",
+                opcionSostenible: "Opción Sostenible (Comunidad): Puesto de Refrescos y Conservas Escolares del Oasis.\nAprovechando la fruta que se descarta en las chacras locales por cuestiones estéticas, los chicos elaboran jugos naturales y frutas secas en la escuela. Montan un puesto rústico los fines de semana en la Península Ruca Co para vender a los turistas, generando ingresos directos para la cooperativa escolar."
             },
             {
                 id: 2, nombre: "Segundo Corredor: Valle Verde y Peñas Blancas",
                 color: "#22c55e", anexosNums: [32, 19],
                 patrimonio: "Ribera e islas del Río Colorado en el extremo norte, yacimientos fósiles y formaciones de la Cuenca Neuquina.",
                 fiestas: "Fiesta Provincial del Petróleo y la Energía (Catriel).",
-                identidad: "Cultura petrolera mixturada con la producción hortícola y la vida rural ribereña de frontera con La Pampa."
+                identidad: "Cultura petrolera mixturada con la producción hortícola y la vida rural ribereña de frontera con La Pampa.",
+                flora: "Bosque de galería ripario nativo mezclado con especies exóticas: sauces nativos (sauce criollo) y mimbre, jarillas, zampa y rumi-atish en las zonas de transición al secano.",
+                fauna: "Coipos (nutrias de río), garzas brujas, biguás, y peces nativos en el Río Colorado como la perca y el pejerrey. En la estepa colindante hay presencia de guanacos, choiques y maras.",
+                emprendimientos: "Opción A - Taller de Cestería de Ribera y Mimbre: Aprovechando los sauces y mimbres de las islas del Río Colorado, los estudiantes aprenden y aplican técnicas de cestería artesanal para fabricar canastos, pantallas de lámparas y artesanías útiles para los turistas rurales.\n\nOpción B - Parada de Ciclistas y Herboristería de Frontera: Montan un taller básico de reparación y parchado de bicicletas en la escuela para asistir a los cicloturistas que recorren el norte provincial. Lo complementan con la venta de mezclas de hierbas secas locales para el mate (poleo, carqueja).",
+                opcionSustentable: "Opción Sustentable (Recurso): Deshidratadero Solar de Hortalizas de la Ribera.\nConstruyen deshidratadores caseros en el patio de la sede con madera y vidrio. Secan los excedentes de la producción hortícola del Río Colorado (tomates, pimientos) usando energía solar y los envasan en bolsas de papel madera para los viajeros.",
+                opcionSostenible: "Opción Sostenible (Comunidad): Taller Gastronómico e Identidad de Frontera.\nLos estudiantes acondicionan un espacio en la escuela para ofrecer meriendas de campo con repostería tradicional y dulces caseros a los trabajadores locales y turistas que transitan la frontera con La Pampa, rescatando las recetas de los primeros pobladores."
             },
             {
                 id: 3, nombre: "Tercer Corredor: Meseta Norte y Transición",
                 color: "#ef4444", anexosNums: [9, 10, 13, 11, 20, 37, 36],
                 patrimonio: "Cañadones profundos, geoformas erosivas, fósiles y la transición a la alta estepa volcánica (más de 1000 msnm) con lagunas endorreicas.",
                 fiestas: "Fiesta del Encuentro y la Tradición (Cerro Policía) y Fiesta del Criancero (Mencué).",
-                identidad: "Identidad transhumante y criancera, aislamiento invernal, fuerte herencia Mapuche y cooperativismo textil de lana y mohair."
+                identidad: "Identidad transhumante y criancera, aislamiento invernal, fuerte herencia Mapuche y cooperativismo textil de lana y mohair.",
+                flora: "Estepa arbustiva y graminosa de altura: coirón (Festuca y Stipa), neneo, uña de gato, espino negro y jarilla de la meseta. En los mallines de altura proliferan juncos y pastos tiernos (Carex).",
+                fauna: "Poblaciones importantes de guanacos y choiques (ñandú petiso). Predadores como el puma y el zorro colorado. En las lagunas endorreicas (como Laguna Blanca) destaca la presencia del flamenco austral, el cauquén común y el amenazado macá tobiano en áreas de influencia.",
+                emprendimientos: "Opción A - Talleres de Tintes Naturales: Los estudiantes de la meseta utilizan raíces de neneo, cáscaras de cebolla, jarilla y barbas de piedra para teñir vellones de lana en ollas de barro en el patio de la escuela. El turista participa del proceso de teñido tradicional y se lleva su propia lana.\n\nOpción B - Parador del Criancero (Gastronomía de Olla): En los días de fiestas locales o tránsito de viajeros, los chicos preparan y sirven almuerzos camperos (guisados al disco, pan de campo al horno de barro de la escuela) utilizando carne caprina ochena y papas de la región.",
+                opcionSustentable: "Opción Sustentable (Recurso): Senderismo Geológico y Resguardo de Fósiles.\nLos chicos de Cerro Policía, Naupahuen o Aguada Guzmán diseñan circuitos de caminatas por los cañadones. Guían a los visitantes bajo la regla estricta de \"mirar y fotografiar sin extraer\", enseñando el valor científico de las geoformas y los fósiles marinos en superficie.",
+                opcionSostenible: "Opción Sostenible (Comunidad): Estación Textil: Demostración de Tintes Naturales de Estepa.\nEn las sedes de la alta estepa (Mencué, Laguna Blanca, etc.), los chicos usan raíces de neneo, jarilla y barbas de piedra para teñir lana en la escuela. Los turistas asisten a los talleres presenciales donde se muestra el proceso de hilado tradicional y pueden comprar los vellones directo a las familias crianceras."
             },
             {
                 id: 4, nombre: "Cuarto Corredor: Precordillera y Cuenca del Limay",
                 color: "#a855f7", anexosNums: [12, 24, 27],
                 patrimonio: "Ecotono de transición y Cordillera de los Andes, ríos de deshielo (Limay, Manso), valles glaciarios y formaciones calcáreas.",
                 fiestas: "Fiesta de la Confluencia (Villa Llanquín) y encuentros de destrezas hípicas.",
-                identidad: "Conectividad por balsa maroma, identidad binacional e histórica de arreo, y vida de montaña."
+                identidad: "Conectividad por balsa maroma, identidad binacional e histórica de arreo, y vida de montaña.",
+                flora: "Ecotono de transición bosque-estepa: bosques de ciprés de la cordillera, radal, ñire y matorrales de mutisia, calafate y rosa mosqueta (exótica). Hacia El Manso se suman el coihue y el amancay.",
+                fauna: "Huemul (en zonas altas y protegidas de El Manso), tuco-tuco, vizcacha de la sierra (chinchillón) y cóndor andino volando los valles. En los ríos Limay y Manso habitan la trucha arcoíris, trucha marrón (exóticas) y el puyen nativo.",
+                emprendimientos: "Opción A - Elaboración de Velas de Cera de Abeja y Aromas del Ecotono: Utilizando cera de abejas de productores locales y esencias naturales extraídas de resina de ciprés, pino o flores silvestres, los chicos fabrican velas artesanales y saquitos aromáticos para los turistas de montaña.\n\nOpción B - Refugio de Montañistas y Guardería de Equipamiento: Acondicionan un sector de la sede para ofrecer el servicio de depósito seguro de mochilas y equipos para los pescadores o escaladores que van al río, cobrando una tarifa por día y ofreciendo mapas de senderos dibujados a mano.",
+                opcionSustentable: "Opción Sustentable (Recurso): Jabonería y Cosmética Biodegradable de Montaña.\nAprovechando que los turistas acampan cerca de los ríos Limay o Manso, los estudiantes elaboran jabones artesanales con rosa mosqueta en el laboratorio de la escuela. Los venden explicando que son 100% biodegradables y no alteran la pureza del agua de deshielo.",
+                opcionSostenible: "Opción Sostenible (Comunidad): Refugio de Acampantes y Guardería de Equipamiento.\nEn Villa Llanquín o Corralito, los chicos aprovechan el espacio escolar para ofrecer un servicio seguro de depósito de mochilas, cañas de pescar y bicicletas, cobrando una tarifa diaria a los mochileros y entregándoles mapas del paraje dibujados a mano."
             },
             {
                 id: 5, nombre: "Quinto Corredor: Suroeste (La Trochita)",
                 color: "#ec4899", anexosNums: [14, 15],
                 patrimonio: "Relieve quebrado con formaciones de basalto negro, mallines de altura y el cañadón del Río Chico.",
                 fiestas: "Fiesta del Río Chico.",
-                identidad: "Cultura ligada indisolublemente al Viejo Expreso Patagónico ('La Trochita'), sus puentes, túneles e ingeniería ferroviaria a vapor."
+                identidad: "Cultura ligada indisolublemente al Viejo Expreso Patagónico ('La Trochita'), sus puentes, túneles e ingeniería ferroviaria a vapor.",
+                flora: "Estepa patagónica subandina: pastizales de coirón amargo y dulce, neneo, charcao y arbustos achaparrados por el viento invernal. Presencia de mallines críticos en los fondos de los valles basálticos.",
+                fauna: "Maras (liebres patagónicas), choiques, zorros colorados, zorrinos patagónicos y piches. Las aves rapaces abundan: el águila mora, el carancho y el halconcito colorado.",
+                emprendimientos: "Opción A - Museo Ferroviario Vivo en el Andén: Los estudiantes recopilan herramientas antiguas, clavos de vía en desuso, faroles y testimonios orales de los viejos ferroviarios del paraje. Montan una muestra viviente y relatan la historia a los pasajeros durante la parada técnica del tren.\n\nOpción B - Taller de Herrería Rústica y Souvenirs de Vía: Utilizando hierros de descarte y técnicas básicas de forja o ensamblado manual, los chicos crean artesanías rústicas (herraduras decorativas, percheros, siluetas de La Trochita en metal) como recuerdos legítimos del paraje.",
+                opcionSustentable: "Opción Sustentable (Recurso): Punto de Mate: Agua Caliente Solar en el Andén.\nEn Río Chico y Mamuel Choique, los estudiantes construyen un colector solar de agua en la escuela. Los días que pasa el Viejo Expreso Patagónico, se instalan en la estación para ofrecer recarga de agua caliente solar para el mate de los pasajeros, promoviendo el uso de energías limpias.",
+                opcionSostenible: "Opción Sostenible (Comunidad): Puesto de Andén: Panadería Criolla e Historia Viva.\nLos chicos amasan pan casero y tortas fritas en el horno de barro de la escuela para vender a los turistas durante la parada del tren. En el andén, exponen herramientas ferroviarias antiguas del paraje y relatan la historia del ramal a vapor a los viajeros."
             },
             {
                 id: 6, nombre: "Sexto Corredor: Somuncura Centro-Oeste y Línea Sur",
-                color: "#06b6d4", anexosNums: [5, 8, 6, 22, 4],
+                color: "#06b6d4", anexosNums: [22, 4, 6, 8, 5],
                 patrimonio: "Vertientes y cañadones del norte de Somuncura que conectan con las mesetas basálticas escalonadas y contrafuertes occidentales.",
                 fiestas: "Fiestas patronales, aniversarios de los parajes y encuentros camperos locales.",
-                identidad: "Comunidades rurales resistentes en el corazón de la estepa, técnicas ancestrales de captación de agua y profunda herencia cultural mapuche."
+                identidad: "Comunidades rurales resistentes en el corazón de la estepa, técnicas ancestrales de captación de agua y profunda herencia cultural mapuche.",
+                flora: "Flora adaptada al riguroso clima de la meseta basáltica: plantas en cojín (como el neneo), arbustos espinosos, jarilla y pastos duros en las zonas altas. En las vertientes y bocas de cañadones aparecen pequeños oasis de helechos y musgos.",
+                fauna: "Especies endémicas de la Meseta de Somuncura (únicas en el mundo): la mojarra desnuda (Gymnocharacinus bergii) en los arroyos térmicos de Yaminué y Treneta, y la ranita de Somuncura. También habitan el guanaco, la chinchilla de la sierra y el piche.",
+                emprendimientos: "Opción A - Observatorio Astronómico de Estepa: Aprovechando la nula contaminación lumínica de la meseta, los chicos diseñan un 'Espacio de Cuentos bajo las Estrellas'. Construyen un mapa estelar en piedra y guían a los visitantes en la observación del cielo nocturno a ojo desnudo, relatando mitos locales y constelaciones tehuelches/mapuches.\n\nOpción B - Producción de Fieltro Artesanal: Con la lana sobrante de las esquilas, los estudiantes elaboran paños de fieltro amasados a mano con agua caliente y jabón para confeccionar sombreros, pantuflas térmicas y abrigos rústicos altamente cotizados por el turismo que desafía el frío de la Línea Sur.",
+                opcionSustentable: "Opción Sustentable (Recurso): Guardianes de Vertientes y Turismo Científico.\nEn Yaminué, Treneta, Comicó y El Caín, el agua es el recurso más crítico. Los chicos actúan como guías locales para fotógrafos o investigadores que visitan las vertientes de la meseta, controlando que no se alteren los cursos de agua donde habita la mojarra desnuda.",
+                opcionSostenible: "Opción Sostenible (Comunidad): Observatorio Astronómico de Estepa a Ojo Desnudo.\nAprovechando la total oscuridad de la estepa en Aguada de Guerra o El Caín, los estudiantes organizan veladas nocturnas en el patio de la escuela. Guían la observación del cielo explicando las constelaciones según los mitos y leyendas tehuelches y mapuches de sus abuelos."
             },
             {
                 id: 7, nombre: "Séptimo Corredor: Chelforó (Valle Medio Oriental)",
                 color: "#f97316", anexosNums: [1],
                 patrimonio: "Valle Medio del Río Negro, zona de transición donde la estepa muerde la llanura aluvial del río.",
                 fiestas: "Fiesta del Pueblo (Chelforó) y vínculo con la Fiesta Nacional del Tomate (Choele Choe).",
-                identidad: "Antigua estación del Ferrocarril Sud e hito caminero clave sobre la Ruta Nacional 22."
+                identidad: "Antigua estación del Ferrocarril Sud e hito caminero clave sobre la Ruta Nacional 22.",
+                flora: "Monte de llanuras y mesetas: predominio absoluto de la jarilla (macho, hembra y crespa), algarrobo dulce achaparrado, alpataco, zampa y matacebo.",
+                fauna: "Zorro gris pampeano, vizcachas, peludos, liebres europeas (exótica), y aves de monte como la martineta copetona, la monterita de collar y el loro barranquero en tránsito.",
+                emprendimientos: "Opción A - Parada de Frutos Secos y Conservas de Ruta: Los estudiantes aprovechan la ubicación estratégica sobre la Ruta 22 para armar un puesto de venta de almendras y nueces del Valle Medio, fraccionadas en cucuruchos de papel madera, ideales para el consumo rápido de los automovilistas.\n\nOpción B - Senderos de la Arcilla y Alfarería de Monte: Extracción de arcillas naturales de los cañadones cercanos a Chelforó. Los chicos modelan piezas utilitarias a mano (ceniceros, cuencos, mates) que hornean a leña en la escuela y venden como artesanía identitaria del corredor ferroviario.",
+                opcionSustentable: "Opción Sustentable (Recurso): Alfarería de Monte con Arcillas Locales.\nLos estudiantes extraen arcilla de los cañadones cercanos a Chelforó. Modelan mates, cuencos y piezas utilitarias que hornean a leña en la escuela, ofreciendo un producto artesanal noble que reemplaza a los recuerdos plásticos industriales.",
+                opcionSostenible: "Opción Sostenible (Comunidad): Parada del Viajero: Fraccionamiento de Frutos Secos de Ruta.\nAprovechando la ubicación clave sobre la Ruta 22, los chicos compran nueces y almendras a los productores de la zona, las fraccionan en la escuela en cucuruchos de papel y las venden a los automovilistas en tránsito, dinamizando la economía del paraje."
             },
             {
                 id: 8, nombre: "Octavo Corredor: Vertiente Oriental, Arroyo Los Berros y Costa Marítima",
-                color: "#14b8a6", anexosNums: [18, 21, 17, 16],
+                color: "#14b8a6", anexosNums: [21, 18, 17, 16],
                 patrimonio: "Desde la meseta profunda y zonas mineras (laja, hierro) hasta los paredones de Paileman, conectando con los acantilados marinos y la desembocadura del Río Negro en el mar.",
                 fiestas: "Fiesta Provincial del Cóndor Andino (Sierra Paileman) y Fiesta de la Piedra Laja (Arroyo Los Berros).",
-                identidad: "Minería artesanal, conservación biológica (reintroducción del cóndor) y arraigo ferroviario en el nodo de Aguada Cecilio."
+                identidad: "Minería artesanal, conservación biológica (reintroducción del cóndor) y arraigo ferroviario en el nodo de Aguada Cecilio.",
+                flora: "Gradiente que va desde la estepa arbustiva del interior (jarillas, botón de oro, picallín) hasta la vegetación psamófila en la costa: unquillo, espartina y plantas pioneras de médano en El Cóndor.",
+                fauna: "En Sierra Paileman destaca el área de reintroducción del cóndor andino (población protegida). Al llegar a la costa en El Cóndor, se encuentra la colonia de loros barranqueros más grande del mundo en sus acantilados, además de lobos marinos de un pelo, elefantes marinos (ocasionales), avifauna playera migratoria (playeros rojizos) y el ensamble de peces marinos del golfo.",
+                emprendimientos: "Opción A - Taller de Grabado y Pintura en Piedra Laja: En Los Berros, los estudiantes seleccionan lajas delgadas y regulares para utilizarlas como soporte artístico, pintando o grabando en ellas motivos de la fauna local (cóndores, loros, ballenas) para vender en las ferias de la costa.\n\nOpción B - Estación de Avistaje y Alquiler de Binoculares: En El Cóndor, los estudiantes arman un puesto móvil cerca de los acantilados. Ofrecen el servicio de alquiler de largavistas y binoculares (mantenidos por la escuela) junto con una cartilla plastificada hecha por ellos para identificar las especies de aves costeras en tiempo real.",
+                opcionSustentable: "Opción Sustentable (Recurso): Estación de Avistaje de Acantilados y Alquiler de Binoculares.\nEn El Cóndor, los estudiantes arman un puesto móvil cerca de las playas. Ofrecen alquiler de binoculares y entregan cartillas plastificadas hechas por ellos mismos para identificar los loros barranqueros y aves playeras, enseñando al turista a observar la fauna sin invadir sus nidos.",
+                opcionSostenible: "Opción Sostenible (Comunidad): Taller de Grabado Artístico en Piedra Laja.\nEn Arroyo Los Berros o Cona Niyeu, los chicos seleccionan lajas delgadas de descarte de las canteras. En el taller de la escuela, las pulen y graban o pintan en ellas motivos de la fauna local (cóndores de Sierra Paileman o loros de la costa) para vender como recuerdos auténticos de la región."
             },
             {
                 id: 9, nombre: "Noveno Corredor: Litoral Atlántico (Nodo Único)",
                 color: "#0ea5e9", anexosNums: [28],
                 patrimonio: "Desembocadura del Río Negro en el Océano Atlántico (El Pescadero). Acantilados marinos activos de la Patagonia septentrional que albergan la colonia de loros barranqueros más grande del mundo, playas de arena extensas y restingas expuestas en bajamar.",
                 fiestas: "Fiesta Nacional del Mar y el Acampante y Fiesta Provincial del Viento (potencial para deportes de vela y kite).",
-                identidad: "Identidad marítima, marítimo-deportiva y de veraneo regional. Es el portal del Camino de la Costa (Ruta Provincial 1) y está profundamente ligado a la historia del faro más antiguo de la Patagonia continental (Faro Río Negro)."
+                identidad: "Identidad marítima, marítimo-deportiva y de veraneo regional. Es el portal del Camino de la Costa (Ruta Provincial 1) y está profundamente ligado a la historia del faro más antiguo de la Patagonia continental (Faro Río Negro).",
+                flora: "Vegetación costero-marítima adaptada a la salinidad y el viento: especies halófilas en dunas y acantilados, pastos marinos en las restingas y matorrales costeros en la transición hacia la estepa.",
+                fauna: "Colonia de loros barranqueros más grande del mundo en los acantilados marinos, lobos marinos de un pelo, elefantes marino, avifauna playera migratoria (playeros rojizos, chorlos) y el ensamble de peces marinos del golfo San Matías.",
+                emprendimientos: ""
             }
         ];
 
@@ -1005,8 +1071,13 @@
             const p = saved && saved.patrimonio != null ? saved.patrimonio : c.patrimonio || '';
             const f = saved && saved.fiestas != null ? saved.fiestas : c.fiestas || '';
             const idv = saved && saved.identidad != null ? saved.identidad : c.identidad || '';
+            const flor = saved && saved.flora != null ? saved.flora : c.flora || '';
+            const faun = saved && saved.fauna != null ? saved.fauna : c.fauna || '';
+            const emp = saved && saved.emprendimientos != null ? saved.emprendimientos : c.emprendimientos || '';
+            const sus = saved && saved.opcionSustentable != null ? saved.opcionSustentable : c.opcionSustentable || '';
+            const sos = saved && saved.opcionSostenible != null ? saved.opcionSostenible : c.opcionSostenible || '';
 
-            ['cp-patrimonio', 'cp-fiestas', 'cp-identidad'].forEach(sid => {
+            ['cp-patrimonio', 'cp-fiestas', 'cp-identidad', 'cp-flora', 'cp-fauna', 'cp-emprendimientos', 'cp-opcionSustentable', 'cp-opcionSostenible'].forEach(sid => {
                 const el = document.getElementById(sid);
                 el.dataset.corredorId = c.id;
                 el.contentEditable = false;
@@ -1016,6 +1087,11 @@
             document.getElementById('cp-patrimonio').innerHTML = p;
             document.getElementById('cp-fiestas').innerHTML = f;
             document.getElementById('cp-identidad').innerHTML = idv;
+            document.getElementById('cp-flora').innerHTML = flor;
+            document.getElementById('cp-fauna').innerHTML = faun;
+            document.getElementById('cp-emprendimientos').innerHTML = emp;
+            document.getElementById('cp-opcionSustentable').innerHTML = sus;
+            document.getElementById('cp-opcionSostenible').innerHTML = sos;
 
             document.getElementById('corredorPanelEditBtn').style.display = '';
             document.getElementById('corredorPanelSaveBtn').style.display = 'none';
@@ -1046,7 +1122,7 @@
         document.getElementById('corredorPanelClose').addEventListener('click', hideCorredorPanel);
 
         document.getElementById('corredorPanelEditBtn').addEventListener('click', () => {
-            ['cp-patrimonio', 'cp-fiestas', 'cp-identidad'].forEach(sid => {
+            ['cp-patrimonio', 'cp-fiestas', 'cp-identidad', 'cp-flora', 'cp-fauna', 'cp-emprendimientos', 'cp-opcionSustentable', 'cp-opcionSostenible'].forEach(sid => {
                 const el = document.getElementById(sid);
                 el.contentEditable = true;
                 el.style.borderColor = 'var(--celeste-linea)';
@@ -1063,10 +1139,15 @@
             const data = {
                 patrimonio: document.getElementById('cp-patrimonio').innerHTML,
                 fiestas: document.getElementById('cp-fiestas').innerHTML,
-                identidad: document.getElementById('cp-identidad').innerHTML
+                identidad: document.getElementById('cp-identidad').innerHTML,
+                flora: document.getElementById('cp-flora').innerHTML,
+                fauna: document.getElementById('cp-fauna').innerHTML,
+                emprendimientos: document.getElementById('cp-emprendimientos').innerHTML,
+                opcionSustentable: document.getElementById('cp-opcionSustentable').innerHTML,
+                opcionSostenible: document.getElementById('cp-opcionSostenible').innerHTML
             };
             saveCorredorInfo(id, data);
-            ['cp-patrimonio', 'cp-fiestas', 'cp-identidad'].forEach(sid => {
+            ['cp-patrimonio', 'cp-fiestas', 'cp-identidad', 'cp-flora', 'cp-fauna', 'cp-emprendimientos', 'cp-opcionSustentable', 'cp-opcionSostenible'].forEach(sid => {
                 const el = document.getElementById(sid);
                 el.contentEditable = false;
                 el.style.borderColor = '#e2e8f0';
@@ -1085,8 +1166,13 @@
                 document.getElementById('cp-patrimonio').innerHTML = (saved.patrimonio != null ? saved.patrimonio : c.patrimonio) || '';
                 document.getElementById('cp-fiestas').innerHTML = (saved.fiestas != null ? saved.fiestas : c.fiestas) || '';
                 document.getElementById('cp-identidad').innerHTML = (saved.identidad != null ? saved.identidad : c.identidad) || '';
+                document.getElementById('cp-flora').innerHTML = (saved.flora != null ? saved.flora : c.flora) || '';
+                document.getElementById('cp-fauna').innerHTML = (saved.fauna != null ? saved.fauna : c.fauna) || '';
+                document.getElementById('cp-emprendimientos').innerHTML = (saved.emprendimientos != null ? saved.emprendimientos : c.emprendimientos) || '';
+                document.getElementById('cp-opcionSustentable').innerHTML = (saved.opcionSustentable != null ? saved.opcionSustentable : c.opcionSustentable) || '';
+                document.getElementById('cp-opcionSostenible').innerHTML = (saved.opcionSostenible != null ? saved.opcionSostenible : c.opcionSostenible) || '';
             }
-            ['cp-patrimonio', 'cp-fiestas', 'cp-identidad'].forEach(sid => {
+            ['cp-patrimonio', 'cp-fiestas', 'cp-identidad', 'cp-flora', 'cp-fauna', 'cp-emprendimientos', 'cp-opcionSustentable', 'cp-opcionSostenible'].forEach(sid => {
                 const el = document.getElementById(sid);
                 el.contentEditable = false;
                 el.style.borderColor = '#e2e8f0';
@@ -1178,16 +1264,16 @@
                     const a = anexos[0];
                     const p = projectionFn([a.lon, a.lat]);
                     if (!p) return;
-                    // Fill glow
-                    gCorredores.append('circle')
+                    const g = gCorredores.append('g')
+                        .attr('class', 'corredor-ring-group')
+                        .attr('data-corredor', c.id);
+                    g.append('circle')
                         .attr('cx', p[0]).attr('cy', p[1])
                         .attr('r', 35)
                         .attr('fill', c.color)
                         .attr('opacity', 0.15)
-                        .attr('class', 'corredor-glow')
-                        .attr('data-corredor', c.id);
-                    // Ring
-                    gCorredores.append('circle')
+                        .attr('class', 'corredor-glow');
+                    g.append('circle')
                         .attr('cx', p[0]).attr('cy', p[1])
                         .attr('r', 30)
                         .attr('fill', 'none')
@@ -1195,23 +1281,20 @@
                         .attr('stroke-width', 4)
                         .attr('stroke-dasharray', '6,5')
                         .attr('opacity', 0.7)
-                        .attr('class', 'corredor-ring')
-                        .attr('data-corredor', c.id)
-                        .style('cursor', 'pointer')
-                        .on('click', (event) => { event.stopPropagation(); showCorredorPanel(c); })
-                        .on('mouseenter', function() {
-                            d3.select(this).attr('opacity', 1).attr('stroke-width', 6);
-                            d3.select(this.parentNode).select('.corredor-glow[data-corredor="' + c.id + '"]').attr('opacity', 0.25);
-                        })
-                        .on('mouseleave', function() {
-                            d3.select(this).attr('opacity', 0.7).attr('stroke-width', 4);
-                            d3.select(this.parentNode).select('.corredor-glow[data-corredor="' + c.id + '"]').attr('opacity', 0.15);
-                        });
+                        .attr('class', 'corredor-ring');
+                    g.on('click', (event) => { event.stopPropagation(); showCorredorPanel(c); });
+                    g.on('mouseenter', function() {
+                        d3.select(this).select('.corredor-ring').attr('opacity', 1).attr('stroke-width', 6);
+                        d3.select(this).select('.corredor-glow').attr('opacity', 0.25);
+                    });
+                    g.on('mouseleave', function() {
+                        d3.select(this).select('.corredor-ring').attr('opacity', 0.7).attr('stroke-width', 4);
+                        d3.select(this).select('.corredor-glow').attr('opacity', 0.15);
+                    });
                     return;
                 }
 
-                const sorted = [...anexos].sort((a, b) => b.lat - a.lat);
-                const points = sorted.map(a => projectionFn([a.lon, a.lat])).filter(Boolean);
+                const points = anexos.map(a => projectionFn([a.lon, a.lat])).filter(Boolean);
                 if (points.length < 2) return;
 
                 const lineGen = d3.line().x(d => d[0]).y(d => d[1]).curve(d3.curveCatmullRom);
@@ -1348,6 +1431,14 @@
                 });
                 gRutas.style('display', 'none');
 
+                // Build map: anexo num → corredor for single-anexo corredores
+                const singleAnexoCorredor = new Map();
+                CORREDORES.forEach(c => {
+                    if (c.anexosNums.length === 1) {
+                        singleAnexoCorredor.set(c.anexosNums[0], c);
+                    }
+                });
+
                 ANEXOS.forEach(a => {
                     const p = projectionFn([a.lon, a.lat]);
                     if (!p) return;
@@ -1383,8 +1474,13 @@
                     g.on('mouseleave', hideTooltip);
                     g.on('click', (event) => {
                         event.stopPropagation();
-                        const rect = mapDiv.getBoundingClientRect();
-                        showPopup(a, event.clientX - rect.left, event.clientY - rect.top);
+                        const corr = singleAnexoCorredor.get(a.num);
+                        if (corr) {
+                            showCorredorPanel(corr);
+                        } else {
+                            const rect = mapDiv.getBoundingClientRect();
+                            showPopup(a, event.clientX - rect.left, event.clientY - rect.top);
+                        }
                     });
                 });
 
@@ -1428,7 +1524,12 @@
                     zoomOffset = [tx, ty];
                     currentZoom = targetZoom;
                     gMain.transition().duration(500).attr('transform', `translate(${tx},${ty}) scale(${targetZoom})`);
-                    showPopup(a, null, null);
+                    const corr = singleAnexoCorredor.get(a.num);
+                    if (corr) {
+                        showCorredorPanel(corr);
+                    } else {
+                        showPopup(a, null, null);
+                    }
                 });
                 list.appendChild(div);
             });
@@ -1503,7 +1604,7 @@
         svg.on('mousedown', (event) => {
             if (event.target.closest('.marker-group')) return;
             if (event.target.closest('.corredor-hit')) return;
-            if (event.target.closest('.corredor-ring')) return;
+            if (event.target.closest('.corredor-ring-group')) return;
             isPanning = true;
             panStart = [event.clientX - zoomOffset[0], event.clientY - zoomOffset[1]];
             svg.style('cursor', 'grabbing');
